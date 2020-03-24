@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../vendor/magento/framework/ObjectManager/etc/config.xsd">
+    <preference for="EasySales\Integrari\Api\CategoryManagementInterface" type="EasySales\Integrari\Model\CategoryManagement"/>
+    <preference for="EasySales\Integrari\Api\ProductManagementInterface" type="EasySales\Integrari\Model\ProductManagement"/>
+    <preference for="EasySales\Integrari\Api\OrderManagementInterface" type="EasySales\Integrari\Model\OrderManagement"/>
+</config>

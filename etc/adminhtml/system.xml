@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../vendor/magento/module-config/etc/system_file.xsd">
+    <system>
+        <tab id="easysales" translate="label" sortOrder="10">
+            <label>EasySales</label>
+        </tab>
+        <section id="settings" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Setari</label>
+            <tab>easysales</tab>
+            <resource>EasySales_Integrari::settings_config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Setari</label>
+
+                <field id="website_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Website Token</label>
+                    <comment>This token will be used to communicate with EasySales</comment>
+                </field>
+
+                <field id="ean_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>EAN attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Ean</source_model>
+                </field>
+
+                <field id="invoice_series" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Invoice Series</label>
+                    <comment>This field will be used to create the invoices with this prefix</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

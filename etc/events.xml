@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../vendor/magento/framework/Event/etc/events.xsd">
+    <event name="catalog_category_save_after">
+        <observer name="easysales_category_save_after" instance="EasySales\Integrari\Observer\SendCategoryAfterSave" />
+    </event>
+    <event name="catalog_product_save_after">
+        <observer name="easysales_product_save_after" instance="EasySales\Integrari\Observer\SendProductAfterSave"/>
+    </event>
+    <event name="catalog_entity_attribute_save_after">
+        <observer name="easysales_characteristic_save_after" instance="EasySales\Integrari\Observer\SendCharacteristicAfterSave" />
+    </event>
+    <event name="sales_order_place_after">
+        <observer name="easysales_order_place_after" instance="EasySales\Integrari\Observer\SendOrderAfterSave" />
+    </event>
+    <event name="sales_order_save_after">
+        <observer name="easysales_order_save_after" instance="EasySales\Integrari\Observer\SendOrderAfterSave" />
+    </event>
+    <event name="order_cancel_after">
+        <observer name="easysales_order_cancel_after" instance="EasySales\Integrari\Observer\SendOrderAfterSave" />
+    </event>
+    <event name="sales_order_address_save_after">
+        <observer name="easysales_order_address_save_after" instance="EasySales\Integrari\Observer\SendOrderAfterSaveOrderAddress" />
+    </event>
+</config>

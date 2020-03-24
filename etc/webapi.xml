@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../vendor/magento/module-webapi/etc/webapi.xsd">
+    <route method="GET" url="/V1/easysales-integrari/categories">
+        <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="getCategories"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="GET" url="/V1/easysales-integrari/products">
+        <service class="EasySales\Integrari\Api\ProductManagementInterface" method="getProducts"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="GET" url="/V1/easysales-integrari/orders">
+        <service class="EasySales\Integrari\Api\OrderManagementInterface" method="getOrders"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="POST" url="/V1/easysales-integrari/category/:categoryId">
+        <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="saveCategory"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+</routes>
