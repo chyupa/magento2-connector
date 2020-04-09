@@ -29,6 +29,6 @@ class EasySales
     private function route($method)
     {
         $route = $this->routes[$method];
-        return sprintf("%s%s", "http://microservice-magento.local/api", $route);
+        return sprintf("%s%s", "https://magento2-microservice.easysales.ro/api", $route);
     }
 }
