@@ -93,6 +93,7 @@ class AttributeManagement implements AttributeManagementInterface
             $model->addData($attributeData);
             $model->setEntityTypeId($this->generateEntityTypeId());
             $model->setIsUserDefined(1);
+            $model->setData('easysales_should_send', false);
             $model->save();
 
             $response = [

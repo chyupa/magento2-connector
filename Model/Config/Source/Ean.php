@@ -31,8 +31,11 @@ class Ean
     public function toOptionArray()
     {
         $attributes = $this->productAttributeRepository->getList($this->searchCriteriaBuilder->create())->getItems();
-
-        $characteristics = [];
+        
+        $characteristics = [
+            'value' => null,
+            'label' => 'Please choose'
+        ];
 
         foreach ($attributes as $attribute) {
             if ($attribute->getFrontendLabel() && $attribute->getIsUserDefined() === '1') {
