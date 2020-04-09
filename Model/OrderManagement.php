@@ -3,14 +3,13 @@
 namespace EasySales\Integrari\Model;
 
 use EasySales\Integrari\Core\Transformers\Order;
+use EasySales\Integrari\Api\OrderManagementInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Webapi\Request;
 use Magento\Sales\Api\OrderRepositoryInterface;
 
-class OrderManagement implements \EasySales\Integrari\Api\OrderManagementInterface
+class OrderManagement implements OrderManagementInterface
 {
-    const PER_PAGE = 10;
-
     private $_orderRepository;
 
     private $_searchCriteria;
@@ -55,7 +54,7 @@ class OrderManagement implements \EasySales\Integrari\Api\OrderManagementInterfa
         foreach ($list->getItems() as $order) {
             $orders[] = $this->_orderService->transform($order)->toArray();
         }
-//die();
+
         return [[
             'perPage' => $limit,
             'pages' => ceil($list->getTotalCount() / $limit ),

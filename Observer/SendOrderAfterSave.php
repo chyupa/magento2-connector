@@ -28,6 +28,9 @@ class SendOrderAfterSave implements ObserverInterface
     {
         /** @var \Magento\Sales\Model\Order $category */
         $order = $observer->getEvent()->getData('order');
+        if ($order->getData('easysales_should_send') === false) {
+            return;
+        }
 
         $transformed = $this->order->transform($order);
 

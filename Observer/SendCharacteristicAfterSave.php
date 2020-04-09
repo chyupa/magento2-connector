@@ -30,6 +30,9 @@ class SendCharacteristicAfterSave implements ObserverInterface
     {
         /** @var Attribute $category */
         $characteristic = $observer->getEvent()->getData('attribute');
+        if ($characteristic->getData('easysales_should_send') === false) {
+            return;
+        }
 
         $transformed = $this->characteristicTransformer->transform($characteristic);
 

@@ -28,6 +28,9 @@ class SendOrderAfterSaveOrderAddress implements ObserverInterface
     {
         /** @var Category $category */
         $address = $observer->getEvent()->getData('address');
+        if ($address->getData('easysales_should_send') === false) {
+            return;
+        }
 
         $transformed = $this->orderTransformer->transform($address->getOrder());
 

@@ -3,14 +3,13 @@
 namespace EasySales\Integrari\Model;
 
 use EasySales\Integrari\Core\Transformers\Product;
+use EasySales\Integrari\Api\ProductManagementInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Webapi\Request;
 
-class ProductManagement implements \EasySales\Integrari\Api\ProductManagementInterface
+class ProductManagement implements ProductManagementInterface
 {
-    const PER_PAGE = 10;
-
     private $_productRepository;
 
     private $_searchCriteria;

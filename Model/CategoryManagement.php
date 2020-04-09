@@ -7,12 +7,17 @@ use Magento\Catalog\Api\CategoryListInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\Category;
+use Magento\Catalog\Model\CategoryFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
+use Magento\Framework\Event\ConfigInterface;
+use Magento\Store\Model\Store;
+use Magento\Framework\Registry;
+use Magento\Framework\ObjectManagerInterface;
 
 class CategoryManagement implements CategoryManagementInterface
 {
-    const PER_PAGE = 10;
     /**
      * @var MagentoCategoryManagementInterface
      */
@@ -24,25 +29,32 @@ class CategoryManagement implements CategoryManagementInterface
 
     private $_request;
     private $_eventManager;
+    private $registry;
 
     /**
      * CategoryManagement constructor.
      * @param RequestInterface $request
      * @param CategoryListInterface $categoryManagement
+     * @param CategoryFactory $categoryRepo
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param ConfigInterface $_eventManager
+     * @param Registry $registry
      */
     public function __construct(
         RequestInterface $request,
         CategoryListInterface $categoryList,
-        CategoryRepositoryInterface $categoryRepo,
+        CategoryFactory $categoryRepo,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        \Magento\Framework\Event\ManagerInterface $eventManager
+        ConfigInterface $_eventManager,
+        ObjectManagerInterface $objectManager,
+    Registry $registry
     ) {
         $this->_request = $request;
         $this->_categoryListRepo = $categoryList;
         $this->_categoryRepo = $categoryRepo;
         $this->_searchCriteria = $searchCriteriaBuilder;
-        $this->_eventManager = $eventManager;
+        $this->_eventConfig = $_eventManager;
+
     }
 
     /**
@@ -77,21 +89,26 @@ class CategoryManagement implements CategoryManagementInterface
     /**
      * @inheritDoc
      */
-    public function saveCategory($categoryId)
+    public function saveCategory($categoryId = null)
     {
-        $data = $this->_request->getBodyParams();
-        $category = $this->_categoryRepo->get($categoryId);
-        $category->setName(9996665);
-        $category->setIsActive(false);
-////        $category->getObserver
-//
-//        $a = $this->_categoryRepo->save($category);
-//        $this->_eventManager->
-//        var_dump($a);die();
 
-        return [
-            "aaa" => "true",
-        ];
+        $data = $this->_request->getBodyParams();
+        $category = $this->_categoryRepo->create();
+
+        if ($categoryId) {
+            $category->load($categoryId);
+        }
+        $category->setName($data['name']);
+        $category->setStoreId(Store::DEFAULT_STORE_ID);
+        $category->setUrlKey($category->formatUrlKey($data['name']));
+        $category->setData('easysales_should_send', false);
+
+        $category->save();
+
+        return [[
+            "success" => true,
+            "category" => $category->getId(),
+        ]];
     }
 }
 

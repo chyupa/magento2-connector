@@ -4,6 +4,7 @@ namespace EasySales\Integrari\Observer;
 
 use EasySales\Integrari\Core\EasySales;
 use Magento\Catalog\Model\Category;
+use EasySales\Integrari\Core\Transformers\Category as CategoryTransformer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -15,7 +16,10 @@ class SendCategoryAfterSave implements ObserverInterface
      */
     private $categoryTransformer;
 
-    public function __construct(EasySales $easySales, \EasySales\Integrari\Core\Transformers\Category $categoryTransformer)
+    public function __construct(
+        EasySales $easySales,
+        CategoryTransformer $categoryTransformer
+    )
     {
         $this->easySales = $easySales;
         $this->categoryTransformer = $categoryTransformer;
@@ -28,6 +32,9 @@ class SendCategoryAfterSave implements ObserverInterface
     {
         /** @var Category $category */
         $category = $observer->getEvent()->getData('category');
+        if ($category->getData('easysales_should_send') === false) {
+            return;
+        }
 
         $transformed = $this->categoryTransformer->transform($category);
 

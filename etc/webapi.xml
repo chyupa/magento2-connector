@@ -18,8 +18,32 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
-    <route method="POST" url="/V1/easysales-integrari/category/:categoryId">
+    <route method="GET" url="/V1/easysales-integrari/attributes">
+        <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="getAttributes"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="POST" url="/V1/easysales-integrari/categories">
         <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="saveCategory"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="PUT" url="/V1/easysales-integrari/categories/:categoryId">
+        <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="saveCategory"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="POST" url="/V1/easysales-integrari/attributes">
+        <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="saveAttribute"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="PUT" url="/V1/easysales-integrari/attributes/:attributeId">
+        <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="saveAttribute"/>
         <resources>
             <resource ref="anonymous"/>
         </resources>

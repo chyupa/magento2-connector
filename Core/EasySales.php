@@ -13,10 +13,10 @@ class EasySales
         $this->websiteToken = $helperData->getGeneralConfig('website_token');
 
         $this->routes = [
-            'sendCategory' => 'test',
-            'sendProduct' => 'test',
-            'sendOrder' => 'test',
-            'sendCharacteristic' => 'test',
+            'sendCategory' => '/v1/website/categories/save', // done
+            'sendProduct' => '/v1/website/products/save', // done
+            'sendOrder' => '/v1/website/orders/save',
+            'sendCharacteristic' => '/v1/website/characteristics/save', // done
         ];
     }
 
@@ -29,6 +29,6 @@ class EasySales
     private function route($method)
     {
         $route = $this->routes[$method];
-        return sprintf("%s/%s", "http://dealwise.local/api", $route);
+        return sprintf("%s%s", "http://microservice-magento.local/api", $route);
     }
 }

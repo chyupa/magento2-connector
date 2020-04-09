@@ -28,6 +28,10 @@ class SendProductAfterSave implements ObserverInterface
     {
         /** @var \Magento\Catalog\Model\Product $category */
         $product = $observer->getEvent()->getData('product');
+
+        if ($product->getData('easysales_should_send') === false) {
+            return;
+        }
         $this->product->setProduct($product);
 
         $this->easySales->execute("sendProduct", ['product' => $this->product->toArray()]);
