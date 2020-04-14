@@ -19,7 +19,17 @@
 
                 <field id="ean_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>EAN attribute</label>
-                    <source_model>EasySales\Integrari\Model\Config\Source\Ean</source_model>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="brand_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Brand attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
+                </field>
+
+                <field id="warehouse_location_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Warehouse Location attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
                 </field>
 
                 <field id="invoice_series" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">

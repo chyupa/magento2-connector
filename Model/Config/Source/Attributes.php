@@ -5,7 +5,7 @@ namespace EasySales\Integrari\Model\Config\Source;
 use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 
-class Ean
+class Attributes
 {
     /**
      * @var SearchCriteriaBuilder
@@ -30,15 +30,16 @@ class Ean
      */
     public function toOptionArray()
     {
-        $attributes = $this->productAttributeRepository->getList($this->searchCriteriaBuilder->create())->getItems();
-        
+        $searchCriteria = $this->searchCriteriaBuilder->create();
+        $attributes = $this->productAttributeRepository->getList($searchCriteria)->getItems();
+
         $characteristics = [
             'value' => null,
             'label' => 'Please choose'
         ];
 
         foreach ($attributes as $attribute) {
-            if ($attribute->getFrontendLabel() && $attribute->getIsUserDefined() === '1') {
+            if ($attribute->getFrontendLabel()) {
                 $characteristics[]= [
                     'value' => $attribute->getAttributeCode(),
                     'label' => $attribute->getFrontendLabel()

@@ -3,13 +3,13 @@
 namespace EasySales\Integrari\Model;
 
 use EasySales\Integrari\Api\AttributeManagementInterface;
-use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
+use Exception;
+use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
-use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
-use Magento\Framework\Controller\ResultFactory;
 
 class AttributeManagement implements AttributeManagementInterface
 {
@@ -36,8 +36,7 @@ class AttributeManagement implements AttributeManagementInterface
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ObjectManagerInterface $objectManager,
         ResultFactory $resultFactory
-    )
-    {
+    ) {
         $this->_request = $request;
         $this->_objectManager = $objectManager;
         $this->attributeFactory = $attributeFactory;
@@ -56,13 +55,21 @@ class AttributeManagement implements AttributeManagementInterface
         $page = $this->_request->getQueryValue('page', 1);
         $limit = $this->_request->getQueryValue('limit', self::PER_PAGE);
         $this->_searchCriteria->setPageSize($limit)->setCurrentPage($page);
-        $list = $this->_attributeListRepo->getList("catalog_product", $this->_searchCriteria->create());
+        $searchCriteria = $this->_searchCriteria
+            ->addFilter('is_user_defined', 1)
+            ->addFilter('frontend_label', null, 'notnull')
+            ->addFilter('frontend_input', [
+                'text',
+                'select',
+                'textarea',
+                'multiselect',
+                'boolean',
+            ], 'in')
+            ->create();
+        $list = $this->_attributeListRepo->getList("catalog_product", $searchCriteria);
 
         $attributes = [];
         foreach ($list->getItems() as $attribute) {
-            if (!$attribute->getDefaultFrontendLabel()) {
-                continue;
-            }
             $attributes[] = [
                 "characteristic_website_id" => $attribute->getId(),
                 "name"                      => $attribute->getDefaultFrontendLabel(),
@@ -115,14 +122,14 @@ class AttributeManagement implements AttributeManagementInterface
      * @param $name
      * @param $type
      * @return array
+     * @throws \Zend_Validate_Exception
      */
     private function generateAttributeData($name, $type)
     {
         $attributeData = [
-            'frontend_label'                       =>
-                array(
+            'frontend_label'                       => [
                     0 => $name,
-                ),
+                ],
             'frontend_input'                       => $type,
             'is_required'                          => '0',
             'update_product_preview_image'         => '0',
@@ -151,8 +158,8 @@ class AttributeManagement implements AttributeManagementInterface
             'is_visible_on_front'                  => '0',
             'used_in_product_listing'              => '0',
             'used_for_sort_by'                     => '0',
-            'source_model'                         => NULL,
-            'backend_model'                        => NULL,
+            'source_model'                         => null,
+            'backend_model'                        => null,
             'backend_type'                         => 'varchar',
             'is_filterable'                        => 0,
             'is_filterable_in_search'              => 0,
@@ -171,12 +178,12 @@ class AttributeManagement implements AttributeManagementInterface
         )->getTypeId();
     }
 
-
     /**
      * Generate code from label
      *
      * @param string $label
      * @return string
+     * @throws \Zend_Validate_Exception
      */
     protected function generateCode($label)
     {
@@ -196,4 +203,3 @@ class AttributeManagement implements AttributeManagementInterface
         return $code;
     }
 }
-

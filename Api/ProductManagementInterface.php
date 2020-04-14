@@ -10,4 +10,10 @@ interface ProductManagementInterface
      * @return mixed
      */
     public function getProducts();
+
+    /**
+     * @param string|null $productId
+     * @return Magento\Framework\Controller\Result\Json
+     */
+    public function saveProduct(string $productId = null);
 }

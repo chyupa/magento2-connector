@@ -5,56 +5,47 @@ namespace EasySales\Integrari\Model;
 use EasySales\Integrari\Api\CategoryManagementInterface;
 use Magento\Catalog\Api\CategoryListInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
-use Magento\Catalog\Api\Data\CategoryInterface;
-use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\CategoryFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 use Magento\Framework\Event\ConfigInterface;
+use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 use Magento\Store\Model\Store;
-use Magento\Framework\Registry;
-use Magento\Framework\ObjectManagerInterface;
 
 class CategoryManagement implements CategoryManagementInterface
 {
-    /**
-     * @var MagentoCategoryManagementInterface
-     */
     private $_categoryListRepo;
 
+    private $_categoryFactory;
     private $_categoryRepo;
 
     private $_searchCriteria;
 
     private $_request;
-    private $_eventManager;
-    private $registry;
+    private $_eventConfig;
 
     /**
      * CategoryManagement constructor.
      * @param RequestInterface $request
-     * @param CategoryListInterface $categoryManagement
-     * @param CategoryFactory $categoryRepo
+     * @param CategoryListInterface $categoryList
+     * @param CategoryFactory $categoryFactory
+     * @param CategoryRepositoryInterface $categoryRepo
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ConfigInterface $_eventManager
-     * @param Registry $registry
      */
     public function __construct(
         RequestInterface $request,
         CategoryListInterface $categoryList,
-        CategoryFactory $categoryRepo,
+        CategoryFactory $categoryFactory,
+        CategoryRepositoryInterface $categoryRepo,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ConfigInterface $_eventManager,
-        ObjectManagerInterface $objectManager,
-    Registry $registry
+        ConfigInterface $_eventManager
     ) {
         $this->_request = $request;
         $this->_categoryListRepo = $categoryList;
+        $this->_categoryFactory = $categoryFactory;
         $this->_categoryRepo = $categoryRepo;
         $this->_searchCriteria = $searchCriteriaBuilder;
         $this->_eventConfig = $_eventManager;
-
     }
 
     /**
@@ -80,7 +71,7 @@ class CategoryManagement implements CategoryManagementInterface
 
         return [[
             'perPage' => $limit,
-            'pages' => ceil($list->getTotalCount() / $limit ),
+            'pages' => ceil($list->getTotalCount() / $limit),
             'curPage' => $page,
             'categories' => $categories,
         ]];
@@ -88,27 +79,36 @@ class CategoryManagement implements CategoryManagementInterface
 
     /**
      * @inheritDoc
+     * @throws \Exception
      */
-    public function saveCategory($categoryId = null)
+    public function saveCategory(string $categoryId = null)
     {
-
         $data = $this->_request->getBodyParams();
-        $category = $this->_categoryRepo->create();
 
-        if ($categoryId) {
-            $category->load($categoryId);
-        }
+        $category = $this->getNewOrExistingCategory($categoryId);
+
         $category->setName($data['name']);
         $category->setStoreId(Store::DEFAULT_STORE_ID);
         $category->setUrlKey($category->formatUrlKey($data['name']));
         $category->setData('easysales_should_send', false);
 
-        $category->save();
+        $this->_categoryRepo->save($category);
 
         return [[
             "success" => true,
             "category" => $category->getId(),
         ]];
     }
-}
 
+    /**
+     * Get category by id or create a new category object
+     *
+     * @param $categoryId
+     * @return \Magento\Catalog\Api\Data\CategoryInterface|\Magento\Catalog\Model\Category
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getNewOrExistingCategory($categoryId)
+    {
+        return $categoryId ? $this->_categoryRepo->get($categoryId) : $this->_categoryFactory->create();
+    }
+}

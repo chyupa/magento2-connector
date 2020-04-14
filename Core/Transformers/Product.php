@@ -26,7 +26,22 @@ class Product
      * @var Data
      */
     private $helperData;
+
+    /**
+     * @var mixed
+     */
     private $eanAttribute;
+
+    /**
+     * @var mixed
+     */
+    private $brandAttribute;
+
+    /**
+     * @var mixed
+     */
+    private $warehouseLocationAttribute;
+
     /**
      * @var array
      */
@@ -43,6 +58,8 @@ class Product
         $this->helperData = $helperData;
 
         $this->eanAttribute = $this->helperData->getGeneralConfig('ean_attribute');
+        $this->brandAttribute = $this->helperData->getGeneralConfig('brand_attribute');
+        $this->warehouseLocationAttribute = $this->helperData->getGeneralConfig('warehouse_location_attribute');
     }
 
     public function setProduct(\Magento\Catalog\Api\Data\ProductInterface $product)
@@ -65,12 +82,12 @@ class Product
             "weight" => $this->product->getWeight(),
             "type" => $this->product->getTypeId() === "simple" ? "simple" : "complex",
             "url" => $this->product->getProductUrl(),
-            "warehouse_location" => "",
+            "warehouse_location" => $this->warehouseLocationAttribute ? $this->product->getData($this->warehouseLocationAttribute) : null,
             "categories" => $this->productCategoryList->getCategoryIds($this->product->getId()),
             "images" => $images,
             "characteristics" => $characteristics,
-            "brand" => $this->product->getData('manufacturer'),
-            "ean" => $this->product->getData($this->eanAttribute),
+            "brand" => $this->brandAttribute ? $this->product->getData($this->brandAttribute) : null,
+            "ean" => $this->eanAttribute ? $this->product->getData($this->eanAttribute) : null,
         ];
 
         return $this;
