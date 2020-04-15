@@ -4,6 +4,7 @@
         <settings>
             <general>
                 <website_token>null</website_token>
+                <stock_source>null</stock_source>
                 <brand_attribute>null</brand_attribute>
                 <warehouse_location_attribute>null</warehouse_location_attribute>
             </general>

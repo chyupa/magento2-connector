@@ -3,6 +3,8 @@
 namespace EasySales\Integrari\Model;
 
 use EasySales\Integrari\Api\CategoryManagementInterface;
+use EasySales\Integrari\Core\Auth\CheckWebsiteToken;
+use EasySales\Integrari\Helper\Data;
 use Magento\Catalog\Api\CategoryListInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\CategoryFactory;
@@ -11,41 +13,60 @@ use Magento\Framework\Event\ConfigInterface;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 use Magento\Store\Model\Store;
 
-class CategoryManagement implements CategoryManagementInterface
+class CategoryManagement extends CheckWebsiteToken implements CategoryManagementInterface
 {
-    private $_categoryListRepo;
+    /**
+     * @var CategoryListInterface
+     */
+    private $categoryListRepo;
 
-    private $_categoryFactory;
-    private $_categoryRepo;
+    /**
+     * @var CategoryFactory
+     */
+    private $categoryFactory;
 
-    private $_searchCriteria;
+    /**
+     * @var CategoryRepositoryInterface
+     */
+    private $categoryRepo;
 
-    private $_request;
-    private $_eventConfig;
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteria;
+
+    /**
+     * @var ConfigInterface
+     */
+    private $eventConfig;
 
     /**
      * CategoryManagement constructor.
+     * @param Data $helperData
      * @param RequestInterface $request
      * @param CategoryListInterface $categoryList
      * @param CategoryFactory $categoryFactory
      * @param CategoryRepositoryInterface $categoryRepo
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param ConfigInterface $_eventManager
+     * @param ConfigInterface $eventManager
+     * @throws \Exception
      */
     public function __construct(
+        Data $helperData,
         RequestInterface $request,
         CategoryListInterface $categoryList,
         CategoryFactory $categoryFactory,
         CategoryRepositoryInterface $categoryRepo,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ConfigInterface $_eventManager
+        ConfigInterface $eventManager
     ) {
-        $this->_request = $request;
-        $this->_categoryListRepo = $categoryList;
-        $this->_categoryFactory = $categoryFactory;
-        $this->_categoryRepo = $categoryRepo;
-        $this->_searchCriteria = $searchCriteriaBuilder;
-        $this->_eventConfig = $_eventManager;
+        parent::__construct($request, $helperData);
+
+        $this->categoryListRepo = $categoryList;
+        $this->categoryFactory = $categoryFactory;
+        $this->categoryRepo = $categoryRepo;
+        $this->searchCriteria = $searchCriteriaBuilder;
+        $this->eventConfig = $eventManager;
     }
 
     /**
@@ -55,10 +76,10 @@ class CategoryManagement implements CategoryManagementInterface
      */
     public function getCategories()
     {
-        $page = $this->_request->getQueryValue('page', 1);
-        $limit = $this->_request->getQueryValue('limit', self::PER_PAGE);
-        $this->_searchCriteria->setPageSize($limit)->setCurrentPage($page);
-        $list = $this->_categoryListRepo->getList($this->_searchCriteria->create());
+        $page = $this->request->getQueryValue('page', 1);
+        $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
+        $this->searchCriteria->setPageSize($limit)->setCurrentPage($page);
+        $list = $this->categoryListRepo->getList($this->searchCriteria->create());
 
         $categories = [];
         foreach ($list->getItems() as $category) {
@@ -83,7 +104,7 @@ class CategoryManagement implements CategoryManagementInterface
      */
     public function saveCategory(string $categoryId = null)
     {
-        $data = $this->_request->getBodyParams();
+        $data = $this->request->getBodyParams();
 
         $category = $this->getNewOrExistingCategory($categoryId);
 
@@ -92,7 +113,7 @@ class CategoryManagement implements CategoryManagementInterface
         $category->setUrlKey($category->formatUrlKey($data['name']));
         $category->setData('easysales_should_send', false);
 
-        $this->_categoryRepo->save($category);
+        $this->categoryRepo->save($category);
 
         return [[
             "success" => true,
@@ -109,6 +130,6 @@ class CategoryManagement implements CategoryManagementInterface
      */
     private function getNewOrExistingCategory($categoryId)
     {
-        return $categoryId ? $this->_categoryRepo->get($categoryId) : $this->_categoryFactory->create();
+        return $categoryId ? $this->categoryRepo->get($categoryId) : $this->categoryFactory->create();
     }
 }

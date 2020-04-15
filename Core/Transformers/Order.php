@@ -3,25 +3,34 @@
 namespace EasySales\Integrari\Core\Transformers;
 
 use EasySales\Integrari\Helper\Data;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Sales\Api\Data\OrderInterface;
 
-class Order
+class Order extends BaseTransformer
 {
     /**
      * @var Data
      */
     private $helperData;
+
     /**
-     * @var \Magento\Framework\Stdlib\DateTime
+     * @var DateTime
      */
     private $dateTime;
 
-    public function __construct(Data $helperData, \Magento\Framework\Stdlib\DateTime $dateTime)
+    /**
+     * Order constructor.
+     *
+     * @param Data $helperData
+     * @param DateTime $dateTime
+     */
+    public function __construct(Data $helperData, DateTime $dateTime)
     {
         $this->helperData = $helperData;
         $this->dateTime = $dateTime;
     }
 
-    public function transform(\Magento\Sales\Api\Data\OrderInterface $order)
+    public function transform(OrderInterface $order)
     {
         try {
             $code = $order->getPayment()->getMethodInstance()->getCode();
@@ -97,11 +106,11 @@ class Order
             'fax' => $address['fax'],
             'identification_number' => null,
             'legal_entity' => $address['company'] ? 1 : 0,
-            'bank' => NULL,
-            'iban' => NULL,
+            'bank' => null,
+            'iban' => null,
             'vat_id' => $address['vat_id'],
-            'registration_number' => NULL,
-            'vat_payer' => NULL
+            'registration_number' => null,
+            'vat_payer' => null,
         ];
     }
 
@@ -159,10 +168,5 @@ class Order
         }
 
         return $products;
-    }
-
-    public function toArray()
-    {
-        return $this->data;
     }
 }

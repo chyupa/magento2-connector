@@ -3,46 +3,61 @@
 namespace EasySales\Integrari\Model;
 
 use EasySales\Integrari\Api\AttributeManagementInterface;
+use EasySales\Integrari\Core\Auth\CheckWebsiteToken;
+use EasySales\Integrari\Helper\Data;
 use Exception;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 
-class AttributeManagement implements AttributeManagementInterface
+class AttributeManagement extends CheckWebsiteToken implements AttributeManagementInterface
 {
-    private $_request;
-    private $_objectManager;
+    /**
+     * @var ObjectManagerInterface
+     */
+    private $objectManager;
+
+    /**
+     * @var AttributeFactory
+     */
     private $attributeFactory;
-    private $resultFactory;
-    private $_attributeListRepo;
-    private $_searchCriteria;
+
+    /**
+     * @var AttributeRepositoryInterface
+     */
+    private $attributeListRepo;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteria;
 
     /**
      * CategoryManagement constructor.
+     *
+     * @param Data $helperData
      * @param RequestInterface $request
      * @param AttributeFactory $attributeFactory
      * @param AttributeRepositoryInterface $attributeRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ObjectManagerInterface $objectManager
-     * @param ResultFactory $resultFactory
+     * @throws Exception
      */
     public function __construct(
+        Data $helperData,
         RequestInterface $request,
         AttributeFactory $attributeFactory,
         AttributeRepositoryInterface $attributeRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ObjectManagerInterface $objectManager,
-        ResultFactory $resultFactory
+        ObjectManagerInterface $objectManager
     ) {
-        $this->_request = $request;
-        $this->_objectManager = $objectManager;
+        parent::__construct($request, $helperData);
+        $this->objectManager = $objectManager;
         $this->attributeFactory = $attributeFactory;
-        $this->resultFactory = $resultFactory;
-        $this->_attributeListRepo = $attributeRepository;
-        $this->_searchCriteria = $searchCriteriaBuilder;
+        $this->attributeListRepo = $attributeRepository;
+        $this->searchCriteria = $searchCriteriaBuilder;
     }
 
     /**
@@ -52,10 +67,10 @@ class AttributeManagement implements AttributeManagementInterface
      */
     public function getAttributes()
     {
-        $page = $this->_request->getQueryValue('page', 1);
-        $limit = $this->_request->getQueryValue('limit', self::PER_PAGE);
-        $this->_searchCriteria->setPageSize($limit)->setCurrentPage($page);
-        $searchCriteria = $this->_searchCriteria
+        $page = $this->request->getQueryValue('page', 1);
+        $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
+        $this->searchCriteria->setPageSize($limit)->setCurrentPage($page);
+        $searchCriteria = $this->searchCriteria
             ->addFilter('is_user_defined', 1)
             ->addFilter('frontend_label', null, 'notnull')
             ->addFilter('frontend_input', [
@@ -66,7 +81,7 @@ class AttributeManagement implements AttributeManagementInterface
                 'boolean',
             ], 'in')
             ->create();
-        $list = $this->_attributeListRepo->getList("catalog_product", $searchCriteria);
+        $list = $this->attributeListRepo->getList("catalog_product", $searchCriteria);
 
         $attributes = [];
         foreach ($list->getItems() as $attribute) {
@@ -87,21 +102,20 @@ class AttributeManagement implements AttributeManagementInterface
     /**
      * @inheritDoc
      */
-    public function saveAttribute($attributeId = null)
+    public function saveAttribute(string $attributeId = null)
     {
-        $data = $this->_request->getBodyParams();
-        $model = $this->attributeFactory->create();
+        $data = $this->request->getBodyParams();
 
         try {
-            if ($attributeId) {
-                $model->load($attributeId);
-            }
+            $model = $this->getNewOrExistingAttribute($attributeId);
+
             $attributeData = $this->generateAttributeData($data['name'], 'text');
             $model->addData($attributeData);
             $model->setEntityTypeId($this->generateEntityTypeId());
             $model->setIsUserDefined(1);
             $model->setData('easysales_should_send', false);
-            $model->save();
+
+            $this->attributeListRepo->save($model);
 
             $response = [
                 "success"   => true,
@@ -110,11 +124,11 @@ class AttributeManagement implements AttributeManagementInterface
 
             return [$response];
         } catch (Exception $exception) {
-            // does not arrive here thought :(
-            return [
+            // does not arrive here though :(
+            return [[
                 "success" => false,
                 "message" => $exception->getMessage(),
-            ];
+            ]];
         }
     }
 
@@ -128,8 +142,8 @@ class AttributeManagement implements AttributeManagementInterface
     {
         $attributeData = [
             'frontend_label'                       => [
-                    0 => $name,
-                ],
+                0 => $name,
+            ],
             'frontend_input'                       => $type,
             'is_required'                          => '0',
             'update_product_preview_image'         => '0',
@@ -169,9 +183,12 @@ class AttributeManagement implements AttributeManagementInterface
         return $attributeData;
     }
 
+    /**
+     * @return mixed
+     */
     private function generateEntityTypeId()
     {
-        return $this->_objectManager->create(
+        return $this->objectManager->create(
             \Magento\Eav\Model\Entity::class
         )->setType(
             \Magento\Catalog\Model\Product::ENTITY
@@ -185,13 +202,13 @@ class AttributeManagement implements AttributeManagementInterface
      * @return string
      * @throws \Zend_Validate_Exception
      */
-    protected function generateCode($label)
+    private function generateCode($label)
     {
         $code = substr(
             preg_replace(
                 '/[^a-z_0-9]/',
                 '_',
-                $this->_objectManager->create(\Magento\Catalog\Model\Product\Url::class)->formatUrlKey($label)
+                $this->objectManager->create(\Magento\Catalog\Model\Product\Url::class)->formatUrlKey($label)
             ),
             0,
             30
@@ -201,5 +218,15 @@ class AttributeManagement implements AttributeManagementInterface
             $code = 'attr_' . ($code ?: substr(md5(time()), 0, 8));
         }
         return $code;
+    }
+
+    /**
+     * @param null $attributeId
+     * @return \Magento\Eav\Api\Data\AttributeInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getNewOrExistingAttribute($attributeId = null)
+    {
+        return $attributeId ? $this->attributeListRepo->get("catalog_product", $attributeId) : $this->attributeFactory->create();
     }
 }

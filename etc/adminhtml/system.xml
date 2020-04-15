@@ -17,22 +17,28 @@
                     <comment>This token will be used to communicate with EasySales</comment>
                 </field>
 
-                <field id="ean_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="stock_source" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Stock Source</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\StockSource</source_model>
+                    <comment>Choose the default Stock Source as EasySales does not yet support multiple stock sources.</comment>
+                </field>
+
+                <field id="ean_attribute" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>EAN attribute</label>
                     <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
                 </field>
 
-                <field id="brand_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="brand_attribute" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Brand attribute</label>
                     <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
                 </field>
 
-                <field id="warehouse_location_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="warehouse_location_attribute" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Warehouse Location attribute</label>
                     <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
                 </field>
 
-                <field id="invoice_series" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="invoice_series" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Invoice Series</label>
                     <comment>This field will be used to create the invoices with this prefix</comment>
                 </field>

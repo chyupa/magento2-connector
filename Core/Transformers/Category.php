@@ -2,9 +2,11 @@
 
 namespace EasySales\Integrari\Core\Transformers;
 
-class Category
+use Magento\Catalog\Model\Category as MagentoCategory;
+
+class Category extends BaseTransformer
 {
-    public function transform(\Magento\Catalog\Model\Category $category)
+    public function transform(MagentoCategory $category)
     {
         $this->data = [
             'category_website_id' => $category->getId(),
@@ -12,10 +14,5 @@ class Category
         ];
 
         return $this;
-    }
-
-    public function toArray()
-    {
-        return $this->data;
     }
 }

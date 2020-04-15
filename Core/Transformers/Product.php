@@ -5,17 +5,16 @@ namespace EasySales\Integrari\Core\Transformers;
 use EasySales\Integrari\Helper\Data;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\ProductCategoryList;
-use Magento\CatalogInventory\Model\Stock\StockItemRepository;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 
-class Product
+class Product extends BaseTransformer
 {
     /**
      * @var \Magento\Catalog\Model\Product
      */
     private $product;
     /**
-     * @var StockItemRepository
+     * @var GetSourceItemsBySkuInterface
      */
     private $stockRepository;
     /**
@@ -45,24 +44,39 @@ class Product
     /**
      * @var array
      */
-    public $data;
+    private $data;
 
+    /**
+     * @var mixed
+     */
+    private $defaultStockSource;
+
+    /**
+     * Product constructor.
+     * @param GetSourceItemsBySkuInterface $stockItemRepository
+     * @param ProductCategoryList $productCategoryList
+     * @param Data $helperData
+     */
     public function __construct(
-        StockItemRepository $stockItemRepository,
+        GetSourceItemsBySkuInterface $stockItemRepository,
         ProductCategoryList $productCategoryList,
         Data $helperData
     ) {
         $this->stockRepository = $stockItemRepository;
         $this->productCategoryList = $productCategoryList;
-
         $this->helperData = $helperData;
 
         $this->eanAttribute = $this->helperData->getGeneralConfig('ean_attribute');
         $this->brandAttribute = $this->helperData->getGeneralConfig('brand_attribute');
         $this->warehouseLocationAttribute = $this->helperData->getGeneralConfig('warehouse_location_attribute');
+        $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
     }
 
-    public function setProduct(\Magento\Catalog\Api\Data\ProductInterface $product)
+    /**
+     * @param ProductInterface $product
+     * @return $this
+     */
+    public function setProduct(ProductInterface $product)
     {
         $this->product = $product;
         $characteristics = $this->getCharacteristics($this->product);
@@ -91,11 +105,6 @@ class Product
         ];
 
         return $this;
-    }
-
-    public function toArray()
-    {
-        return $this->data;
     }
 
     /**
@@ -147,13 +156,15 @@ class Product
      */
     protected function getStock(ProductInterface $product)
     {
-        try {
-            $stock = $this->stockRepository->get($product->getId());
-            $stock = $stock->getQty();
-        } catch (NoSuchEntityException $exception) {
-            $stock = 0;
+        $quantity = 0;
+        $stocks = $this->stockRepository->execute($product->getSku());
+        $stockSourceItem = null;
+        foreach ($stocks as $stock) {
+            if ($stock->getSourceCode() === $this->defaultStockSource && $stock->getStatus()) {
+                $quantity = $stock->getQuantity();
+                break;
+            }
         }
-
-        return $stock;
+        return $quantity;
     }
 }

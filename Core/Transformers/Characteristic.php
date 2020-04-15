@@ -2,9 +2,15 @@
 
 namespace EasySales\Integrari\Core\Transformers;
 
-class Characteristic
+use Magento\Catalog\Api\Data\ProductAttributeInterface;
+
+class Characteristic extends BaseTransformer
 {
-    public function transform(\Magento\Catalog\Api\Data\ProductAttributeInterface $attribute)
+    /**
+     * @param ProductAttributeInterface $attribute
+     * @return $this
+     */
+    public function transform(ProductAttributeInterface $attribute)
     {
         $this->data = [
             'characteristic_website_id' => $attribute->getId(),
@@ -12,10 +18,5 @@ class Characteristic
         ];
 
         return $this;
-    }
-
-    public function toArray()
-    {
-        return $this->data;
     }
 }

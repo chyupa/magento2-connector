@@ -2,19 +2,26 @@
 
 namespace EasySales\Integrari\Model;
 
-use EasySales\Integrari\Core\Transformers\Order;
 use EasySales\Integrari\Api\OrderManagementInterface;
+use EasySales\Integrari\Core\Auth\CheckWebsiteToken;
+use EasySales\Integrari\Core\Transformers\Order;
+use EasySales\Integrari\Helper\Data;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Webapi\Request;
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Api\OrderRepositoryInterface;
 
-class OrderManagement implements OrderManagementInterface
+class OrderManagement extends CheckWebsiteToken implements OrderManagementInterface
 {
-    private $_orderRepository;
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
 
-    private $_searchCriteria;
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteria;
 
-    private $_request;
     /**
      * @var Order
      */
@@ -22,20 +29,24 @@ class OrderManagement implements OrderManagementInterface
 
     /**
      * CategoryManagement constructor.
+     * @param Data $helperData
      * @param Request $request
      * @param OrderRepositoryInterface $orderRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param Order $orderService
+     * @throws \Exception
      */
     public function __construct(
+        Data $helperData,
         Request $request,
         OrderRepositoryInterface $orderRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         Order $orderService
     ) {
-        $this->_request = $request;
-        $this->_orderRepository = $orderRepository;
-        $this->_searchCriteria = $searchCriteriaBuilder;
+        parent::__construct($request, $helperData);
+
+        $this->orderRepository = $orderRepository;
+        $this->searchCriteria = $searchCriteriaBuilder;
         $this->_orderService = $orderService;
     }
 
@@ -44,11 +55,11 @@ class OrderManagement implements OrderManagementInterface
      */
     public function getOrders()
     {
-        $page = $this->_request->getQueryValue('page', 1);
-        $limit = $this->_request->getQueryValue('limit', self::PER_PAGE);
-        $this->_searchCriteria->setPageSize(100)->setCurrentPage($page);
+        $page = $this->request->getQueryValue('page', 1);
+        $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
+        $this->searchCriteria->setPageSize(100)->setCurrentPage($page);
 
-        $list = $this->_orderRepository->getList($this->_searchCriteria->create());
+        $list = $this->orderRepository->getList($this->searchCriteria->create());
         $orders = [];
 
         foreach ($list->getItems() as $order) {
@@ -57,7 +68,7 @@ class OrderManagement implements OrderManagementInterface
 
         return [[
             'perPage' => $limit,
-            'pages' => ceil($list->getTotalCount() / $limit ),
+            'pages' => ceil($list->getTotalCount() / $limit),
             'curPage' => $page,
             'orders' => $orders,
         ]];
