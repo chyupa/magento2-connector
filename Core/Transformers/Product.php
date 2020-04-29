@@ -42,11 +42,6 @@ class Product extends BaseTransformer
     private $warehouseLocationAttribute;
 
     /**
-     * @var array
-     */
-    private $data;
-
-    /**
      * @var mixed
      */
     private $defaultStockSource;

@@ -7,8 +7,8 @@ use Magento\Framework\HTTP\ClientInterface;
 
 class EasySales
 {
-//    const MICROSERVICE_URL = "http://microservice-magento.local/api";
     const MICROSERVICE_URL = "https://magento2-microservice.easysales.ro/api";
+//    const MICROSERVICE_URL = "http://microservice-magento.local/api";
 
     /**
      * @var ClientInterface
