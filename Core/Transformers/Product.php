@@ -86,7 +86,7 @@ class Product extends BaseTransformer
             "name" => $this->product->getName(),
             "sale_price" => $this->product->getFinalPrice(),
             "full_price" => $this->product->getPrice(),
-            "description" => $this->product->getDescription(),
+            "description" => $this->product->getDescription() ?? "&nbsp;",
             "stock" => $stock,
             "weight" => $this->product->getWeight(),
             "type" => $this->product->getTypeId() === "simple" ? "simple" : "complex",
