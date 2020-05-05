@@ -4,4 +4,5 @@
     <preference for="EasySales\Integrari\Api\ProductManagementInterface" type="EasySales\Integrari\Model\ProductManagement"/>
     <preference for="EasySales\Integrari\Api\OrderManagementInterface" type="EasySales\Integrari\Model\OrderManagement"/>
     <preference for="EasySales\Integrari\Api\AttributeManagementInterface" type="EasySales\Integrari\Model\AttributeManagement"/>
+    <preference for="EasySales\Integrari\Api\IntegrationManagementInterface" type="EasySales\Integrari\Model\IntegrationManagement"/>
 </config>

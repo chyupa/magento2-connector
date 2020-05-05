@@ -1,5 +1,11 @@
 <?xml version="1.0" ?>
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../vendor/magento/module-webapi/etc/webapi.xsd">
+    <route method="POST" url="/V1/easysales-integrari/test-connection">
+        <service class="EasySales\Integrari\Api\IntegrationManagementInterface" method="testConnection"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="GET" url="/V1/easysales-integrari/categories">
         <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="getCategories"/>
         <resources>
