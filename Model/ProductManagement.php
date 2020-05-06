@@ -154,6 +154,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         $page = $this->request->getQueryValue('page', 1);
         $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
         $this->searchCriteria
+            ->addFilter('type_id', 'simple')
             ->setPageSize($limit)
             ->setCurrentPage($page);
 

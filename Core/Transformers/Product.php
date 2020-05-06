@@ -4,7 +4,9 @@ namespace EasySales\Integrari\Core\Transformers;
 
 use EasySales\Integrari\Helper\Data;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\ProductCategoryList;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 
 class Product extends BaseTransformer
@@ -46,25 +48,37 @@ class Product extends BaseTransformer
      */
     private $defaultStockSource;
 
+    private $configurableType;
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
     /**
      * Product constructor.
      * @param GetSourceItemsBySkuInterface $stockItemRepository
+     * @param ProductRepositoryInterface $productRepository
      * @param ProductCategoryList $productCategoryList
+     * @param Configurable $configurableType
      * @param Data $helperData
      */
     public function __construct(
         GetSourceItemsBySkuInterface $stockItemRepository,
+        ProductRepositoryInterface $productRepository,
         ProductCategoryList $productCategoryList,
+        Configurable $configurableType,
         Data $helperData
     ) {
         $this->stockRepository = $stockItemRepository;
         $this->productCategoryList = $productCategoryList;
         $this->helperData = $helperData;
+        $this->configurableType = $configurableType;
 
         $this->eanAttribute = $this->helperData->getGeneralConfig('ean_attribute');
         $this->brandAttribute = $this->helperData->getGeneralConfig('brand_attribute');
         $this->warehouseLocationAttribute = $this->helperData->getGeneralConfig('warehouse_location_attribute');
         $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -80,6 +94,13 @@ class Product extends BaseTransformer
 
         $images = $this->getImages($this->product);
 
+        $parentProduct = null;
+        $parentIds = $this->configurableType->getParentIdsByChild($product->getId());
+        if (count($parentIds)) {
+            $parentId = $parentIds[0];
+            $parentProduct = $this->productRepository->getById($parentId);
+        }
+
         $this->data = [
             "product_website_id" => $this->product->getId(),
             "sku" => $this->product->getSku(),
@@ -89,7 +110,6 @@ class Product extends BaseTransformer
             "description" => $this->product->getDescription() ?? "&nbsp;",
             "stock" => $stock,
             "weight" => $this->product->getWeight(),
-            "type" => $this->product->getTypeId() === "simple" ? "simple" : "complex",
             "url" => $this->product->getProductUrl(),
             "warehouse_location" => $this->warehouseLocationAttribute ? $this->product->getData($this->warehouseLocationAttribute) : null,
             "categories" => $this->productCategoryList->getCategoryIds($this->product->getId()),
@@ -97,6 +117,10 @@ class Product extends BaseTransformer
             "characteristics" => $characteristics,
             "brand" => $this->brandAttribute ? $this->product->getData($this->brandAttribute) : null,
             "ean" => $this->eanAttribute ? $this->product->getData($this->eanAttribute) : null,
+            "type" => $parentProduct ? "complex" : "simple",
+            "parent_id" => $parentProduct ? $parentProduct->getId() : null,
+            "parent_url" => $parentProduct ? $parentProduct->getProductUrl() : null,
+            "parent_name" => $parentProduct ? $parentProduct->getName() : null,
         ];
 
         return $this;

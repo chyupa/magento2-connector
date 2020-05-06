@@ -29,6 +29,10 @@ class SendProductAfterSave implements ObserverInterface
         /** @var \Magento\Catalog\Model\Product $category */
         $product = $observer->getEvent()->getData('product');
 
+        if ($product->getTypeId() === "configurable") {
+            return;
+        }
+
         if ($product->getData('easysales_should_send') === false) {
             return;
         }
