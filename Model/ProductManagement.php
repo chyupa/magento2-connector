@@ -304,7 +304,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         $characteristicsData = [];
         $attributeGroupId = null;
         foreach ($characteristics as $characteristic) {
-            if (in_array($characteristics['characteristic_website_id'], $processed)) continue;
+            if (in_array($characteristic['characteristic_website_id'], $processed)) continue;
             $value = $characteristic['value'];
             $attribute = $this->attributeRepository->get(
                 \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
