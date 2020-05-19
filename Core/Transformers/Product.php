@@ -146,6 +146,15 @@ class Product extends BaseTransformer
             $value = $product->getData($productAttribute->getData('attribute_code'));
             if ($productAttribute->getFrontendInput() === "multiselect" || $productAttribute->getFrontendInput() === "select") {
                 $value = $productAttribute->getSource()->getOptionText($value);
+                if (is_array($value)) {
+                    foreach ($value as $val) {
+                        $characteristics[] = [
+                            "id" => $productAttribute->getData('attribute_id'),
+                            "value" => $val,
+                        ];
+                    }
+                    continue;
+                }
             }
             $characteristics[] = [
                 "id" => $productAttribute->getData('attribute_id'),
