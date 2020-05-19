@@ -292,6 +292,8 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                 if (in_array(strtolower($characteristic['value']), ['yes', 'da', 'true', '1'])) {
                     $value = true;
                 }
+            } else if ($attribute->getFrontendInput() === "multiselect" || $attribute->getFrontendInput() === "select") {
+                $value = $attribute->getSource()->getOptionId($value);
             }
 
             if (!$product->getData($attribute->getAttributeCode()) && $attributeGroupId) {
@@ -300,7 +302,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                     $product->getAttributeSetId(),
                     $attributeGroupId,
                     $attribute->getAttributeCode(),
-                    1
+                    null
                 );
 
                 // retrieve the product again just so we can add the attribute value to the newly assigned attribute

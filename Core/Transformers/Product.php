@@ -143,9 +143,13 @@ class Product extends BaseTransformer
             if (!$attributeId || !$productValue || is_array($productValue) || !$isUserDefined || !$hasFrontendLabel) {
                 continue;
             }
+            $value = $product->getData($productAttribute->getData('attribute_code'));
+            if ($productAttribute->getFrontendInput() === "multiselect" || $productAttribute->getFrontendInput() === "select") {
+                $value = $productAttribute->getSource()->getOptionText($value);
+            }
             $characteristics[] = [
                 "id" => $productAttribute->getData('attribute_id'),
-                "value" => $product->getData($productAttribute->getData('attribute_code')),
+                "value" => $value,
             ];
         }
         return $characteristics;
