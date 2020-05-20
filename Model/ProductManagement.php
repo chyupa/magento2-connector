@@ -18,9 +18,9 @@ use Magento\Eav\Api\Data\AttributeOptionLabelInterface;
 use Magento\Eav\Model\Entity\Attribute\FrontendLabelFactory;
 use Magento\Eav\Model\Entity\Attribute\GroupFactory;
 use Magento\Eav\Model\Entity\Attribute\Option;
-use Magento\Eav\Model\Entity\Attribute\OptionLabel;
 use Magento\Eav\Model\Entity\AttributeFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Exception\StateException;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 use Magento\InventoryApi\Api\SourceRepositoryInterface;
@@ -148,7 +148,8 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         SourceRepositoryInterface $sourceRepository,
         Product $productService,
         Data $helperData
-    ) {
+    )
+    {
         parent::__construct($request, $helperData);
 
         $this->productRepository = $productRepository;
@@ -194,9 +195,9 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         }
 
         return [[
-            'perPage' => $limit,
-            'pages' => ceil($list->getTotalCount() / $limit),
-            'curPage' => $page,
+            'perPage'  => $limit,
+            'pages'    => ceil($list->getTotalCount() / $limit),
+            'curPage'  => $page,
             'products' => $products,
         ]];
     }
@@ -323,6 +324,9 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                 }
             } else if ($attribute->getFrontendInput() === "select") {
                 $value = $attribute->getSource()->getOptionId($value);
+                if ($value) {
+                    $value = $this->addOptionSelect($attribute, $characteristic['value']);
+                }
             } else if ($attribute->getFrontendInput() === "multiselect") {
                 $characteristicOptions = array_filter($characteristics, function ($characteristicOption) use ($characteristic) {
                     return $characteristicOption['characteristic_website_id'] === $characteristic['characteristic_website_id'];
@@ -336,13 +340,15 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                     foreach ($characteristicOptions as $characteristicOption) {
                         $option = $attribute->getSource()->getOptionId($characteristicOption['value']);
                         if (!$option) {
-                            $option = $this->addOption($attribute, $characteristicOption['value']);
+                            $option = $this->addOptionMultiselect($attribute, $characteristicOption['value']);
                         }
 
                         $characteristicsValues[] = $option;
                     }
 
                     $value = implode(",", $characteristicsValues);
+                } else if (!$value) {
+                    $value = $this->addOptionMultiselect($attribute, $characteristic['value']);
                 }
             }
 
@@ -378,14 +384,59 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     }
 
     /**
-     * Add new option to Attribute if it is mutliselect or select
+     * Add new option to an option attribute
+     *
+     * @param $attribute
+     * @param $label
+     * @return mixed
+     * @throws StateException
+     * @throws \Magento\Framework\Exception\InputException
+     */
+    private function addOptionSelect($attribute, $label)
+    {
+        $currentAttributes = [];
+        $attributeOptions = $this->attributeOptionManagement->getItems('catalog_product', $attribute);
+        $newOptions = [];
+        $counter = 0;
+        foreach ($attributeOptions as $option) {
+            if (!$option->getValue()) {
+                continue;
+            }
+            if ($option->getLabel() instanceof \Magento\Framework\Phrase) {
+                $attrLabel = $option->getText();
+            } else {
+                $attrLabel = $option->getLabel();
+            }
+
+            if ($attrLabel == '') {
+                continue;
+            }
+
+            $currentAttributes[] = $attrLabel;
+            $newOptions['value'][$option->getValue()] = [$attrLabel, $attrLabel];
+            $counter++;
+        }
+
+        $newOptions['value']['option_' . $counter] = [$label, $label];
+        $attribute->setOption($newOptions);
+        $attribute->setData($attribute->getLabelCode(), $label);
+        try {
+            $this->attributeRepository->save($attribute);
+        } catch (\Exception $e) {
+        }
+
+        return $attribute->getSource()->getOptionId($label);
+    }
+
+    /**
+     * Add new option to Attribute if it is mutliselect
      * Might still fail if there is another label with default value the $label and store value something else
      *
      * @param $attribute
      * @param $label
      * @return string|null
      */
-    private function addOption($attribute, $label)
+    private function addOptionMultiselect($attribute, $label)
     {
         /** @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel */
         $optionLabel = $this->attributeOptionLabel->create();
@@ -404,7 +455,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                 $attribute,
                 $option
             );
-        } catch (\Exception $exception) {
+        } catch (StateException $exception) {
             $newOptionId = null;
         }
 
