@@ -107,7 +107,7 @@ class Product extends BaseTransformer
             "name" => $this->product->getName(),
             "sale_price" => $this->product->getFinalPrice(),
             "full_price" => $this->product->getPrice(),
-            "description" => $this->product->getDescription() ?? "&nbsp;",
+            "description" => $this->product->getDescription(),
             "stock" => $stock,
             "weight" => $this->product->getWeight(),
             "url" => $this->product->getProductUrl(),
