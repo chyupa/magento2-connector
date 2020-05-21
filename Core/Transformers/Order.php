@@ -78,7 +78,7 @@ class Order extends BaseTransformer
             'total_vouchers' => (float) $order->getBaseDiscountAmount(),
             'customer' => $this->getCustomer($order, $order->getBillingAddress()->getData()),
             'billing_address' => $this->getAddress($order->getBillingAddress()->getData()),
-            'shipping_address' => $this->getAddress($order->getShippingAddress()->getData()),
+            'shipping_address' => $order->getShippingAddress() ? $this->getAddress($order->getShippingAddress()->getData()) : null,
             'order_products' => $this->getOrderProducts($order),
         ];
 
