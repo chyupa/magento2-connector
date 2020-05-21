@@ -324,7 +324,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                 }
             } else if ($attribute->getFrontendInput() === "select") {
                 $value = $attribute->getSource()->getOptionId($value);
-                if ($value) {
+                if (!$value) {
                     $value = $this->addOptionSelect($attribute, $characteristic['value']);
                 }
             } else if ($attribute->getFrontendInput() === "multiselect") {
@@ -417,12 +417,14 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
             $counter++;
         }
 
-        $newOptions['value']['option_' . $counter] = [$label, $label];
+        if (!in_array($label, $currentAttributes)) {
+            $newOptions['value']['option_' . $counter] = [$label, $label];
+        }
         $attribute->setOption($newOptions);
-        $attribute->setData($attribute->getLabelCode(), $label);
         try {
             $this->attributeRepository->save($attribute);
         } catch (\Exception $e) {
+            var_dump($e->getMessage(), $e->getTraceAsString());
         }
 
         return $attribute->getSource()->getOptionId($label);
