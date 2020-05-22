@@ -7,6 +7,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\ProductCategoryList;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 
 class Product extends BaseTransformer
@@ -15,6 +16,10 @@ class Product extends BaseTransformer
      * @var \Magento\Catalog\Model\Product
      */
     private $product;
+    /**
+     * @var \Magento\Catalog\Model\Product
+     */
+    private $parentProduct;
     /**
      * @var GetSourceItemsBySkuInterface
      */
@@ -53,10 +58,17 @@ class Product extends BaseTransformer
      * @var ProductRepositoryInterface
      */
     private $productRepository;
+    /**
+     * @var AttributeRepositoryInterface
+     */
+    private $attributeRepository;
+
+    private $ignoredAttributeCodes = [];
 
     /**
      * Product constructor.
      * @param GetSourceItemsBySkuInterface $stockItemRepository
+     * @param AttributeRepositoryInterface $attributeRepository
      * @param ProductRepositoryInterface $productRepository
      * @param ProductCategoryList $productCategoryList
      * @param Configurable $configurableType
@@ -64,6 +76,7 @@ class Product extends BaseTransformer
      */
     public function __construct(
         GetSourceItemsBySkuInterface $stockItemRepository,
+        AttributeRepositoryInterface $attributeRepository,
         ProductRepositoryInterface $productRepository,
         ProductCategoryList $productCategoryList,
         Configurable $configurableType,
@@ -79,6 +92,7 @@ class Product extends BaseTransformer
         $this->warehouseLocationAttribute = $this->helperData->getGeneralConfig('warehouse_location_attribute');
         $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
         $this->productRepository = $productRepository;
+        $this->attributeRepository = $attributeRepository;
     }
 
     /**
@@ -88,18 +102,18 @@ class Product extends BaseTransformer
     public function setProduct(ProductInterface $product)
     {
         $this->product = $product;
-        $characteristics = $this->getCharacteristics($this->product);
-
-        $stock = $this->getStock($this->product);
-
-        $images = $this->getImages($this->product);
-
-        $parentProduct = null;
-        $parentIds = $this->configurableType->getParentIdsByChild($product->getId());
+        $parentIds = $this->configurableType->getParentIdsByChild($this->product->getId());
         if (count($parentIds)) {
             $parentId = $parentIds[0];
-            $parentProduct = $this->productRepository->getById($parentId);
+            $this->parentProduct = $this->productRepository->getById($parentId);
         }
+        $warehouseLocation = $this->getData($this->warehouseLocationAttribute);
+        $brand = $this->getData($this->brandAttribute);
+        $ean = $this->getData($this->eanAttribute);
+        $stock = $this->getStock($this->product);
+        $images = $this->getImages();
+
+        $characteristics = $this->getCharacteristics();
 
         $this->data = [
             "product_website_id" => $this->product->getId(),
@@ -111,19 +125,49 @@ class Product extends BaseTransformer
             "stock" => $stock,
             "weight" => $this->product->getWeight(),
             "url" => $this->product->getProductUrl(),
-            "warehouse_location" => $this->warehouseLocationAttribute ? $this->product->getData($this->warehouseLocationAttribute) : null,
+            "warehouse_location" => $warehouseLocation,
             "categories" => $this->productCategoryList->getCategoryIds($this->product->getId()),
             "images" => $images,
             "characteristics" => $characteristics,
-            "brand" => $this->brandAttribute ? $this->product->getData($this->brandAttribute) : null,
-            "ean" => $this->eanAttribute ? $this->product->getData($this->eanAttribute) : null,
-            "type" => $parentProduct ? "complex" : "simple",
-            "parent_id" => $parentProduct ? $parentProduct->getId() : null,
-            "parent_url" => $parentProduct ? $parentProduct->getProductUrl() : null,
-            "parent_name" => $parentProduct ? $parentProduct->getName() : null,
+            "brand" => $brand,
+            "ean" => $ean,
+            "type" => $this->parentProduct ? "complex" : "simple",
+            "parent_id" => $this->parentProduct ? $this->parentProduct->getId() : null,
+            "parent_url" => $this->parentProduct ? $this->parentProduct->getProductUrl() : null,
+            "parent_name" => $this->parentProduct ? $this->parentProduct->getName() : null,
         ];
 
         return $this;
+    }
+
+    /**
+     * Get characteristics from the product and from it's parent if it exists
+     *
+     * @return array
+     */
+    public function getCharacteristics()
+    {
+        $characteristics = $this->getProductCharacteristics($this->product);
+        if ($this->parentProduct) {
+            $parentCharacteristics = $this->getProductCharacteristics($this->parentProduct);
+            foreach ($parentCharacteristics as $key => $parentChar) {
+                $exists = false;
+                foreach ($characteristics as $char) {
+                    if ($parentChar['id'] === $char['id']) {
+                        $exists = true;
+                        break;
+                    }
+                }
+
+                if ($exists) {
+                    unset($parentCharacteristics[$key]);
+                }
+
+            }
+            $characteristics = array_merge($parentCharacteristics, $characteristics);
+        }
+
+        return $characteristics;
     }
 
     /**
@@ -132,10 +176,11 @@ class Product extends BaseTransformer
      * @param ProductInterface $product
      * @return array
      */
-    protected function getCharacteristics(ProductInterface $product)
+    protected function getProductCharacteristics(ProductInterface $product)
     {
         $characteristics = [];
         foreach ($product->getAttributes() as $productAttribute) {
+            if (in_array($this->ignoredAttributeCodes, $productAttribute->getData('attribute_code'))) continue;
             $attributeId = $productAttribute->getData('attribute_id');
             $productValue = $product->getData($productAttribute->getData('attribute_code'));
             $isUserDefined = $productAttribute->getIsUserDefined();
@@ -165,12 +210,29 @@ class Product extends BaseTransformer
     }
 
     /**
-     * Return an array of image urls from product
+     * Return an array of image urls from product and form it's parent product if it exists
+     *
+     * @return array
+     */
+    protected function getImages()
+    {
+        $images = $this->getProductImages($this->product);
+        if (!count($images) && $this->parentProduct) {
+            $parentImages = $this->getProductImages($this->parentProduct);
+
+            $images = array_unique(array_merge($images, $parentImages));
+        }
+
+        return $images;
+    }
+
+    /**
+     * Return an array of images for product
      *
      * @param ProductInterface $product
      * @return array
      */
-    protected function getImages(ProductInterface $product)
+    protected function getProductImages(ProductInterface $product)
     {
         $images = [];
         foreach ($product->getMediaGalleryImages() as $attributeMediaGalleryEntry) {
@@ -198,5 +260,41 @@ class Product extends BaseTransformer
             }
         }
         return $quantity;
+    }
+
+    protected function getData($attributeCode)
+    {
+        try {
+            $productModuleSettingAttribute = $this->attributeRepository
+                ->get('catalog_product', $attributeCode);
+
+            $productModuleSetting = $this->product->getData($attributeCode);
+
+            $parentProduct = null;
+            if (!$productModuleSetting) {
+                $parentIds = $this->configurableType->getParentIdsByChild($this->product->getId());
+                if (count($parentIds)) {
+                    $parentId = $parentIds[0];
+                    $parentProduct = $this->productRepository->getById($parentId);
+
+                    $productModuleSetting = $parentProduct->getData($attributeCode);
+                }
+            }
+
+            if (!$productModuleSetting) {
+                $productModuleSetting = null;
+            } else {
+                if ($productModuleSettingAttribute->getFrontendInput() === "select" || $productModuleSettingAttribute->getFrontendInput() === "multiselect") {
+                    $productModuleSetting = $productModuleSettingAttribute->getOptionText($productModuleSetting);
+                }
+            }
+
+            $this->ignoredAttributeCodes[] = $attributeCode;
+
+            return $productModuleSetting;
+
+        } catch (\Exception $exception) {
+            return null;
+        }
     }
 }
