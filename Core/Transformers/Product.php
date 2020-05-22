@@ -270,22 +270,15 @@ class Product extends BaseTransformer
 
             $productModuleSetting = $this->product->getData($attributeCode);
 
-            $parentProduct = null;
-            if (!$productModuleSetting) {
-                $parentIds = $this->configurableType->getParentIdsByChild($this->product->getId());
-                if (count($parentIds)) {
-                    $parentId = $parentIds[0];
-                    $parentProduct = $this->productRepository->getById($parentId);
-
-                    $productModuleSetting = $parentProduct->getData($attributeCode);
-                }
+            if (!$productModuleSetting && $this->parentProduct) {
+                $productModuleSetting = $this->parentProduct->getData($attributeCode);
             }
 
             if (!$productModuleSetting) {
                 $productModuleSetting = null;
             } else {
                 if ($productModuleSettingAttribute->getFrontendInput() === "select" || $productModuleSettingAttribute->getFrontendInput() === "multiselect") {
-                    $productModuleSetting = $productModuleSettingAttribute->getOptionText($productModuleSetting);
+                    $productModuleSetting = $productModuleSettingAttribute->getSource()->getOptionText($productModuleSetting);
                 }
             }
 
