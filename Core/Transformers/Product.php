@@ -180,7 +180,7 @@ class Product extends BaseTransformer
     {
         $characteristics = [];
         foreach ($product->getAttributes() as $productAttribute) {
-            if (in_array($this->ignoredAttributeCodes, $productAttribute->getData('attribute_code'))) continue;
+            if (in_array($productAttribute->getData('attribute_code'), $this->ignoredAttributeCodes)) continue;
             $attributeId = $productAttribute->getData('attribute_id');
             $productValue = $product->getData($productAttribute->getData('attribute_code'));
             $isUserDefined = $productAttribute->getIsUserDefined();
