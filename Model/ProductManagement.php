@@ -366,6 +366,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
             }
 
             $characteristicsData[$attribute->getAttributeCode()] = $value;
+            $product->setData($attribute->getAttributeCode(), $value);
 
         }
         $this->productAction->updateAttributes([$product->getId()], $characteristicsData, 0);
@@ -380,7 +381,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
      */
     private function getNewOrExistingProduct($productId)
     {
-        return $productId ? $this->productRepository->getById($productId, true) : $this->productFactory->create();
+        return $productId ? $this->productRepository->getById($productId, true, 0, true) : $this->productFactory->create();
     }
 
     /**
