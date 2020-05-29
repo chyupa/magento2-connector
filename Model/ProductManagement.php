@@ -293,6 +293,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     }
 
     /**
+     * TODO: change the text field to multiselect if there are multiple characteristics sent
      * @param \Magento\Catalog\Api\Data\ProductInterface|\Magento\Catalog\Model\Product $product
      * @param $characteristics
      * @throws \Magento\Framework\Exception\InputException
@@ -458,7 +459,9 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
                 $attribute,
                 $option
             );
-        } catch (StateException $exception) {
+            // retrieve the ID of the new attribute option
+            $newOptionId = str_replace("id_", "", $newOptionId);
+        } catch (\Exception $exception) {
             $newOptionId = null;
         }
 

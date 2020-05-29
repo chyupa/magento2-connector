@@ -36,6 +36,12 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
+    <route method="PUT" url="/V1/easysales-integrari/orders/:orderId">
+        <service class="EasySales\Integrari\Api\OrderManagementInterface" method="updateOrder"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="GET" url="/V1/easysales-integrari/attributes">
         <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="getAttributes"/>
         <resources>

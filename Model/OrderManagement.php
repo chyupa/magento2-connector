@@ -73,4 +73,40 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
             'orders' => $orders,
         ]];
     }
+
+    /**
+     * @param string $orderId
+     * @return array[]
+     */
+    public function updateOrder(string $orderId)
+    {
+        $order = $this->orderRepository->get($orderId);
+        $data = $this->request->getBodyParams();
+        switch ($data['status']) {
+            case 3:
+                $orderStatus = \Magento\Sales\Model\Order::STATE_COMPLETE;
+                break;
+            case 0:
+                $orderStatus = \Magento\Sales\Model\Order::STATE_CANCELED;
+                break;
+            default:
+                $orderStatus = \Magento\Sales\Model\Order::STATE_PROCESSING;
+                break;
+        }
+        $order->setState($orderStatus)
+            ->setStatus($orderStatus);
+        try {
+            $this->orderRepository->save($order);
+        } catch (\Exception $exception) {
+            return [[
+                "success" => false,
+                "message" => $exception->getMessage(),
+            ]];
+        }
+
+        return [[
+            "success" => true,
+            "product" => $order->getId(),
+        ]];
+    }
 }
