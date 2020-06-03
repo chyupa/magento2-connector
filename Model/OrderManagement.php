@@ -83,10 +83,10 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
         $order = $this->orderRepository->get($orderId);
         $data = $this->request->getBodyParams();
         switch ($data['status']) {
-            case 3:
+            case 'Completed':
                 $orderStatus = \Magento\Sales\Model\Order::STATE_COMPLETE;
                 break;
-            case 0:
+            case 'Canceled':
                 $orderStatus = \Magento\Sales\Model\Order::STATE_CANCELED;
                 break;
             default:
@@ -106,7 +106,7 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
 
         return [[
             "success" => true,
-            "product" => $order->getId(),
+            "order" => $order->getId(),
         ]];
     }
 }
