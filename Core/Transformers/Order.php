@@ -70,7 +70,7 @@ class Order extends BaseTransformer
             'order_id' => $order->getEntityId(),
             'invoice_series' => $this->helperData->getConfigValue('invoice_series', null),
             'order_date' => $this->dateTime->formatDate($order->getCreatedAt()),
-            'order_total' => (float) $order->getTotalDue(),
+            'order_total' => (float) $order->getTotalDue() + abs($order->getBaseDiscountAmount()),
             'status' => isset($statuses[$order->getStatus()]) ? $statuses[$order->getStatus()] : 1,
             'payment_mode' => isset($paymentMethods[$code]) ? $paymentMethods[$code] : 1,
             'shipment_tax' => (float) $order->getBaseShippingInclTax(),
