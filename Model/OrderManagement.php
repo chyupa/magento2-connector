@@ -80,7 +80,11 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
      */
     public function updateOrder(string $orderId)
     {
-        $order = $this->orderRepository->get($orderId);
+        $searchCriteria = $this->searchCriteria
+            ->addFilter('increment_id', $orderId, 'eq')->create();
+        $orderList = $this->orderRepository->getList($searchCriteria)->getItems();
+
+        $order = end($orderList);
         $data = $this->request->getBodyParams();
         switch ($data['status']) {
             case 'Completed':
@@ -106,7 +110,7 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
 
         return [[
             "success" => true,
-            "order" => $order->getId(),
+            "order" => $order->getIncrementId(),
         ]];
     }
 }

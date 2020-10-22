@@ -67,7 +67,7 @@ class Order extends BaseTransformer
         ];
 
         $this->data = [
-            'order_id' => $order->getEntityId(),
+            'order_id' => $order->getIncrementId(),
             'invoice_series' => $this->helperData->getConfigValue('invoice_series', null),
             'order_date' => $this->dateTime->formatDate($order->getCreatedAt()),
             'order_total' => (float) $order->getTotalDue() + abs($order->getBaseDiscountAmount()),
