@@ -57,7 +57,12 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
     {
         $page = $this->request->getQueryValue('page', 1);
         $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
-        $this->searchCriteria->setPageSize(100)->setCurrentPage($page);
+        $lastCall = $this->request->getQueryValue('last_call');
+        $this->searchCriteria->setPageSize($limit)->setCurrentPage($page);
+        if ($lastCall) {
+            $this->searchCriteria
+                ->addFilter('updated_at', $lastCall, 'gt');
+        }
 
         $list = $this->orderRepository->getList($this->searchCriteria->create());
         $orders = [];

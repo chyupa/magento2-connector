@@ -2,9 +2,11 @@
 
 namespace EasySales\Integrari\Core\Transformers;
 
+use EasySales\Integrari\Core\EasySales;
 use EasySales\Integrari\Helper\Data;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderItemInterface;
 
 class Order extends BaseTransformer
 {
@@ -68,7 +70,7 @@ class Order extends BaseTransformer
 
         $this->data = [
             'order_id' => $order->getIncrementId(),
-            'invoice_series' => $this->helperData->getConfigValue('invoice_series', null),
+            'invoice_series' => $this->helperData->getGeneralConfig('invoice_series', null),
             'order_date' => $this->dateTime->formatDate($order->getCreatedAt()),
             'order_total' => (float) $order->getTotalDue() + abs($order->getBaseDiscountAmount()),
             'status' => isset($statuses[$order->getStatus()]) ? $statuses[$order->getStatus()] : 1,
@@ -142,7 +144,7 @@ class Order extends BaseTransformer
 
         $productsData = $order->getAllVisibleItems();
 
-
+        /** @var OrderItemInterface $product */
         foreach ($productsData as $product) {
             if ($product->getParentItem()) {
                 continue;
@@ -156,14 +158,16 @@ class Order extends BaseTransformer
                 $name = $product->getChildrenItems()[0]->getName();
             }
 
+            $unitPrice = round(($product->getPriceInclTax() / (1 + ((int)$product->getTaxPercent()) / 100)), EasySales::DECIMAL_PRECISION);
+
             $products[] = [
                 'product_website_id' => $id ? $id : $product->getProductId(),
                 'sku' => $product->getSku(),
                 'name' => $name ? $name : $product->getName(),
                 'quantity' => (float) $product->getQtyOrdered(),
-                'price' => (float) $product->getPrice(),
-                'total' => (float) $product->getPrice() * $product->getQtyOrdered(),
-                'tax' => (float) $product->getTaxPercent()
+                'price' => $unitPrice,
+                'total' => $unitPrice * $product->getQtyOrdered(),
+                'tax' => (int) $product->getTaxPercent()
             ];
         }
 
