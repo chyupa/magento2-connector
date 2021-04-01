@@ -71,7 +71,6 @@ class AttributeManagement extends CheckWebsiteToken implements AttributeManageme
         $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
         $this->searchCriteria->setPageSize($limit)->setCurrentPage($page);
         $searchCriteria = $this->searchCriteria
-            ->addFilter('is_user_defined', 1)
             ->addFilter('frontend_label', null, 'notnull')
             ->addFilter('frontend_input', [
                 'text',

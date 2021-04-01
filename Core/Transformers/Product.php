@@ -63,7 +63,21 @@ class Product extends BaseTransformer
      */
     private $attributeRepository;
 
-    private $ignoredAttributeCodes = [];
+    private $ignoredAttributeCodes = [
+        'description',
+        'media_gallery',
+        'image',
+        'image_label',
+        'custom_design',
+        'custom_design_from',
+        'custom_design_to',
+        'custom_layout',
+        'custom_layout_update',
+        'custom_layout_update_file',
+        'meta_description',
+        'meta_keyword',
+        'meta_title',
+    ];
 
     /**
      * Product constructor.
@@ -180,12 +194,22 @@ class Product extends BaseTransformer
     {
         $characteristics = [];
         foreach ($product->getAttributes() as $productAttribute) {
+            // ignore certain attribute code
             if (in_array($productAttribute->getData('attribute_code'), $this->ignoredAttributeCodes)) continue;
+
+            // ignore attribute code which are not the below frontend input
+            if (!in_array($productAttribute->getFrontendInput(), [
+                'text',
+                'select',
+                'textarea',
+                'multiselect',
+                'boolean',
+            ])) continue;
+
             $attributeId = $productAttribute->getData('attribute_id');
             $productValue = $product->getData($productAttribute->getData('attribute_code'));
-            $isUserDefined = $productAttribute->getIsUserDefined();
             $hasFrontendLabel = $productAttribute->getFrontendLabel();
-            if (!$attributeId || !$productValue || is_array($productValue) || !$isUserDefined || !$hasFrontendLabel) {
+            if (!$attributeId || !$productValue || is_array($productValue) || !$hasFrontendLabel) {
                 continue;
             }
             $value = $product->getData($productAttribute->getData('attribute_code'));

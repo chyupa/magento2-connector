@@ -1,0 +1,20 @@
+name: Sync Module
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Zip Release
+      uses: ./.github/actions/sync-module
+      with:
+        url: 'https://magento2-microservice.easysales.ro/api'
+        modules-endpoint: 'https://easysales.ro/api/modules'
+      env:
+        MODULE_SECRET: ${{ secrets.MODULE_SECRET }}
+        WEBSITE_TYPE_ID: '15'

@@ -41,7 +41,7 @@ class Order extends BaseTransformer
         }
 
         $paymentMethods = [
-            'checkmo' => 1,
+            'checkmo' => 2,
             'free' => 1,
             'purchaseorder' => 1,
             'banktransfer' => 3,

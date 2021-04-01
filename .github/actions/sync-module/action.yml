@@ -1,0 +1,18 @@
+# action.yml
+name: 'Sync Module'
+description: 'Sync Module'
+inputs:
+  url:
+    description: 'Base URL'
+    required: true
+    default: 'https:\/\/magento2-microservice.easysales.ro\/api'
+  modules-endpoint:
+    description: 'Modules Endpoint'
+    required: true
+    default: 'https://easysales.ro/api/modules'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.url }}
+    - ${{ inputs.modules-endpoint }}
