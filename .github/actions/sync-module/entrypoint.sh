@@ -3,7 +3,7 @@
 echo '------------------Releasing module-------------------'
 mkdir -p EasySales/Integrari
 #cp -R ./Integrari EasySales/
-rsync -av --progress ./ EasySales/ --exclude .git --exclude .github
+rsync -av --progress ./ EasySales/Integrari --exclude .git --exclude .github
 cd EasySales/Integrari
 echo '------------------Setting URL------------------------'
 sed -i "s,MICROSERVICE_URL = .*,MICROSERVICE_URL = \"$1\";," ./Core/EasySales.php
