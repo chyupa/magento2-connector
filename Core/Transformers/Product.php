@@ -2,6 +2,7 @@
 
 namespace EasySales\Integrari\Core\Transformers;
 
+use EasySales\Integrari\Core\EasySales;
 use EasySales\Integrari\Helper\Data;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -9,6 +10,7 @@ use Magento\Catalog\Model\ProductCategoryList;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
+use Magento\Tax\Model\TaxCalculation;
 
 class Product extends BaseTransformer
 {
@@ -62,6 +64,10 @@ class Product extends BaseTransformer
      * @var AttributeRepositoryInterface
      */
     private $attributeRepository;
+    /**
+     * @var TaxCalculation
+     */
+    private $taxCalculation;
 
     private $ignoredAttributeCodes = [
         'description',
@@ -87,6 +93,7 @@ class Product extends BaseTransformer
      * @param ProductCategoryList $productCategoryList
      * @param Configurable $configurableType
      * @param Data $helperData
+     * @param TaxCalculation $taxCalculation
      */
     public function __construct(
         GetSourceItemsBySkuInterface $stockItemRepository,
@@ -94,12 +101,14 @@ class Product extends BaseTransformer
         ProductRepositoryInterface $productRepository,
         ProductCategoryList $productCategoryList,
         Configurable $configurableType,
-        Data $helperData
+        Data $helperData,
+        TaxCalculation $taxCalculation
     ) {
         $this->stockRepository = $stockItemRepository;
         $this->productCategoryList = $productCategoryList;
         $this->helperData = $helperData;
         $this->configurableType = $configurableType;
+        $this->taxCalculation = $taxCalculation;
 
         $this->eanAttribute = $this->helperData->getGeneralConfig('ean_attribute');
         $this->brandAttribute = $this->helperData->getGeneralConfig('brand_attribute');
@@ -129,12 +138,17 @@ class Product extends BaseTransformer
 
         $characteristics = $this->getCharacteristics();
 
+        $taxRate = $this->taxCalculation->getCalculatedRate($this->product->getData('tax_class_id'));
+        $salePrice = round($this->product->getFinalPrice() * (1 + $taxRate / 100), EasySales::DECIMAL_PRECISION);
+        $fullPrice = round($this->product->getPrice() * (1 + $taxRate / 100), EasySales::DECIMAL_PRECISION);
+
         $this->data = [
             "product_website_id" => $this->product->getId(),
             "sku" => $this->product->getSku(),
             "name" => $this->product->getName(),
-            "sale_price" => $this->product->getFinalPrice(),
-            "full_price" => $this->product->getPrice(),
+            "sale_price" => $salePrice,
+            "full_price" => $fullPrice,
+            "tax_rate" => $taxRate,
             "description" => $this->product->getDescription(),
             "stock" => $stock,
             "weight" => $this->product->getWeight(),
