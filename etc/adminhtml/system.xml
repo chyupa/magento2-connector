@@ -43,6 +43,40 @@
                     <comment>This field will be used to create the invoices with this prefix</comment>
                 </field>
             </group>
+            <group id="dimensions" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Weight / Dimensions settings</label>
+
+                <field id="weight_unit" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Weight unit</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\WeightUnits</source_model>
+                    <comment>Choose the default weight unit used for products.</comment>
+                </field>
+
+                <field id="length_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Length attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
+                    <comment>Choose the attribute for which you enter Length of product.</comment>
+                </field>
+
+                <field id="width_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Width attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
+                    <comment>Choose the attribute for which you enter Width of product.</comment>
+                </field>
+
+                <field id="height_attribute" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Height attribute</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\Attributes</source_model>
+                    <comment>Choose the attribute for which you enter Height of product.</comment>
+                </field>
+
+                <field id="dimension_unit" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Dimensions unit</label>
+                    <source_model>EasySales\Integrari\Model\Config\Source\DimensionUnits</source_model>
+                    <comment>Choose the unit used for saving product dimensions.</comment>
+                </field>
+
+            </group>
         </section>
     </system>
 </config>

@@ -7,6 +7,11 @@
                 <stock_source>null</stock_source>
                 <brand_attribute>null</brand_attribute>
                 <warehouse_location_attribute>null</warehouse_location_attribute>
+                <weight_unit>kg</weight_unit>
+                <length_attribute>null</length_attribute>
+                <width_attribute>null</width_attribute>
+                <height_attribute>null</height_attribute>
+                <dimension_unit>cm</dimension_unit>
             </general>
         </settings>
     </default>

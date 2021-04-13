@@ -69,6 +69,12 @@ class Product extends BaseTransformer
      */
     private $taxCalculation;
 
+    private $weightUnit;
+    private $dimensionsUnit;
+    private $lengthAttribute;
+    private $widthAttribute;
+    private $heightAttribute;
+
     private $ignoredAttributeCodes = [
         'description',
         'media_gallery',
@@ -114,6 +120,14 @@ class Product extends BaseTransformer
         $this->brandAttribute = $this->helperData->getGeneralConfig('brand_attribute');
         $this->warehouseLocationAttribute = $this->helperData->getGeneralConfig('warehouse_location_attribute');
         $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
+
+        $this->weightUnit = $this->helperData->getGeneralConfig('weight_unit', 'dimensions');
+        $this->dimensionsUnit = $this->helperData->getGeneralConfig('dimension_unit', 'dimensions');
+
+        $this->lengthAttribute = $this->helperData->getGeneralConfig('length_attribute', 'dimensions');
+        $this->widthAttribute = $this->helperData->getGeneralConfig('width_attribute', 'dimensions');
+        $this->heightAttribute = $this->helperData->getGeneralConfig('height_attribute', 'dimensions');
+
         $this->productRepository = $productRepository;
         $this->attributeRepository = $attributeRepository;
     }
@@ -151,7 +165,10 @@ class Product extends BaseTransformer
             "tax_rate" => $taxRate,
             "description" => $this->product->getDescription(),
             "stock" => $stock,
-            "weight" => $this->product->getWeight(),
+            "weight" => $this->convertWeight($this->product->getWeight()),
+            "length" => $this->convertDimensions($this->product->getData($this->lengthAttribute)),
+            "width" => $this->convertDimensions($this->product->getData($this->widthAttribute)),
+            "height" => $this->convertDimensions($this->product->getData($this->heightAttribute)),
             "url" => $this->product->getProductUrl(),
             "warehouse_location" => $warehouseLocation,
             "categories" => $this->productCategoryList->getCategoryIds($this->product->getId()),
@@ -327,5 +344,85 @@ class Product extends BaseTransformer
         } catch (\Exception $exception) {
             return null;
         }
+    }
+
+    private function convertWeight($weight)
+    {
+        $weight  = (float) $weight;
+        $to_unit = 'kg';
+        $from_unit = strtolower($this->weightUnit);
+        if ($from_unit !== $to_unit) {
+            switch (strtolower($this->weightUnit)) {
+                case 'g':
+                    $weight *= 0.001;
+                    break;
+                case 'lb':
+                    $weight *= 0.453592;
+                    break;
+                case 'oz':
+                    $weight *= 0.0283495;
+                    break;
+            }
+            // Output desired unit.
+            switch ($to_unit) {
+                case 'g':
+                    $weight *= 1000;
+                    break;
+                case 'lb':
+                    $weight *= 2.20462;
+                    break;
+                case 'oz':
+                    $weight *= 35.274;
+                    break;
+            }
+        }
+
+        return $weight < 0 ? 0 : $weight;
+    }
+
+    private function convertDimensions($dimension)
+    {
+        if (!is_numeric($dimension)) {
+            return 0;
+        }
+
+        $dimension  = (float) $dimension;
+        $to_unit = 'cm';
+        $from_unit = strtolower($this->dimensionsUnit);
+        // Unify all units to cm first.
+        if ( $from_unit !== $to_unit ) {
+            switch ( $from_unit ) {
+                case 'in':
+                    $dimension *= 2.54;
+                    break;
+                case 'm':
+                    $dimension *= 100;
+                    break;
+                case 'mm':
+                    $dimension *= 0.1;
+                    break;
+                case 'yd':
+                    $dimension *= 91.44;
+                    break;
+            }
+
+            // Output desired unit.
+            switch ( $to_unit ) {
+                case 'in':
+                    $dimension *= 0.3937;
+                    break;
+                case 'm':
+                    $dimension *= 0.01;
+                    break;
+                case 'mm':
+                    $dimension *= 10;
+                    break;
+                case 'yd':
+                    $dimension *= 0.010936133;
+                    break;
+            }
+        }
+
+        return $dimension < 0 ? 0 : $dimension;
     }
 }

@@ -18,9 +18,9 @@ class Data extends AbstractHelper
         );
     }
 
-    public function getGeneralConfig($code, $storeId = null)
+    public function getGeneralConfig($code, $group = "general", $storeId = null)
     {
-        return $this->getConfigValue(self::XML_PATH_SETTINGS . 'general/' . $code, $storeId);
+        return $this->getConfigValue(self::XML_PATH_SETTINGS . $group .'/' . $code, $storeId);
     }
 
     public function replaceSpecialChars($string)
