@@ -68,6 +68,11 @@ class Order extends BaseTransformer
             'processing' => 4
         ];
 
+        $shippingTaxRate = 0;
+        if ($order->getShippingAmount() > 0) {
+            $shippingTaxRate = ($order->getShippingTaxAmount() / $order->getShippingAmount()) * 100;
+        }
+
         $this->data = [
             'order_id' => $order->getIncrementId(),
             'invoice_series' => $this->helperData->getGeneralConfig('invoice_series', null),
@@ -82,6 +87,10 @@ class Order extends BaseTransformer
             'billing_address' => $this->getAddress($order->getBillingAddress()->getData()),
             'shipping_address' => $order->getShippingAddress() ? $this->getAddress($order->getShippingAddress()->getData()) : null,
             'order_products' => $this->getOrderProducts($order),
+            'shipment' => [
+                'tax' => $shippingTaxRate,
+                'price_with_tax' => $order->getShippingAmount(),
+            ],
         ];
 
         return $this;
