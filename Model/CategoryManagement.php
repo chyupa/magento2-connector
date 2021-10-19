@@ -21,52 +21,28 @@ class CategoryManagement extends CheckWebsiteToken implements CategoryManagement
     private $categoryListRepo;
 
     /**
-     * @var CategoryFactory
-     */
-    private $categoryFactory;
-
-    /**
-     * @var CategoryRepositoryInterface
-     */
-    private $categoryRepo;
-
-    /**
      * @var SearchCriteriaBuilder
      */
     private $searchCriteria;
-
-    /**
-     * @var ConfigInterface
-     */
-    private $eventConfig;
 
     /**
      * CategoryManagement constructor.
      * @param Data $helperData
      * @param RequestInterface $request
      * @param CategoryListInterface $categoryList
-     * @param CategoryFactory $categoryFactory
-     * @param CategoryRepositoryInterface $categoryRepo
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param ConfigInterface $eventManager
      * @throws \Exception
      */
     public function __construct(
         Data $helperData,
         RequestInterface $request,
         CategoryListInterface $categoryList,
-        CategoryFactory $categoryFactory,
-        CategoryRepositoryInterface $categoryRepo,
-        SearchCriteriaBuilder $searchCriteriaBuilder,
-        ConfigInterface $eventManager
+        SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
         parent::__construct($request, $helperData);
 
         $this->categoryListRepo = $categoryList;
-        $this->categoryFactory = $categoryFactory;
-        $this->categoryRepo = $categoryRepo;
         $this->searchCriteria = $searchCriteriaBuilder;
-        $this->eventConfig = $eventManager;
     }
 
     /**
@@ -96,40 +72,5 @@ class CategoryManagement extends CheckWebsiteToken implements CategoryManagement
             'curPage' => $page,
             'categories' => $categories,
         ]];
-    }
-
-    /**
-     * @inheritDoc
-     * @throws \Exception
-     */
-    public function saveCategory(string $categoryId = null)
-    {
-        $data = $this->request->getBodyParams();
-
-        $category = $this->getNewOrExistingCategory($categoryId);
-
-        $category->setName($data['name']);
-        $category->setStoreId(Store::DEFAULT_STORE_ID);
-        $category->setUrlKey($category->formatUrlKey($data['name']));
-        $category->setData('easysales_should_send', false);
-
-        $this->categoryRepo->save($category);
-
-        return [[
-            "success" => true,
-            "category" => $category->getId(),
-        ]];
-    }
-
-    /**
-     * Get category by id or create a new category object
-     *
-     * @param $categoryId
-     * @return \Magento\Catalog\Api\Data\CategoryInterface|\Magento\Catalog\Model\Category
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
-    private function getNewOrExistingCategory($categoryId)
-    {
-        return $categoryId ? $this->categoryRepo->get($categoryId) : $this->categoryFactory->create();
     }
 }

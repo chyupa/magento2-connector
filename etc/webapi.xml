@@ -24,6 +24,12 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
+    <route method="POST" url="/V1/easysales-integrari/product">
+        <service class="EasySales\Integrari\Api\ProductManagementInterface" method="getProduct"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="GET" url="/V1/easysales-integrari/products">
         <service class="EasySales\Integrari\Api\ProductManagementInterface" method="getProducts"/>
         <resources>
@@ -36,6 +42,12 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
+    <route method="GET" url="/V1/easysales-integrari/orders/:orderId">
+        <service class="EasySales\Integrari\Api\OrderManagementInterface" method="getOrder"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="PUT" url="/V1/easysales-integrari/orders/:orderId">
         <service class="EasySales\Integrari\Api\OrderManagementInterface" method="updateOrder"/>
         <resources>
@@ -44,30 +56,6 @@
     </route>
     <route method="GET" url="/V1/easysales-integrari/attributes">
         <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="getAttributes"/>
-        <resources>
-            <resource ref="anonymous"/>
-        </resources>
-    </route>
-    <route method="POST" url="/V1/easysales-integrari/categories">
-        <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="saveCategory"/>
-        <resources>
-            <resource ref="anonymous"/>
-        </resources>
-    </route>
-    <route method="PUT" url="/V1/easysales-integrari/categories/:categoryId">
-        <service class="EasySales\Integrari\Api\CategoryManagementInterface" method="saveCategory"/>
-        <resources>
-            <resource ref="anonymous"/>
-        </resources>
-    </route>
-    <route method="POST" url="/V1/easysales-integrari/attributes">
-        <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="saveAttribute"/>
-        <resources>
-            <resource ref="anonymous"/>
-        </resources>
-    </route>
-    <route method="PUT" url="/V1/easysales-integrari/attributes/:attributeId">
-        <service class="EasySales\Integrari\Api\AttributeManagementInterface" method="saveAttribute"/>
         <resources>
             <resource ref="anonymous"/>
         </resources>

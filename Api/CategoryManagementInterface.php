@@ -16,10 +16,4 @@ interface CategoryManagementInterface
      * @return mixed
      */
     public function getCategories();
-
-    /**
-     * @param string $categoryId
-     * @return mixed\
-     */
-    public function saveCategory(string $categoryId = null);
 }

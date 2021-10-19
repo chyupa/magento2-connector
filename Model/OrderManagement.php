@@ -26,6 +26,10 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
      * @var Order
      */
     private $_orderService;
+    /**
+     * @var Data
+     */
+    private $helperData;
 
     /**
      * CategoryManagement constructor.
@@ -45,6 +49,7 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
     ) {
         parent::__construct($request, $helperData);
 
+        $this->helperData = $helperData;
         $this->orderRepository = $orderRepository;
         $this->searchCriteria = $searchCriteriaBuilder;
         $this->_orderService = $orderService;
@@ -58,7 +63,10 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
         $page = $this->request->getQueryValue('page', 1);
         $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
         $lastCall = $this->request->getQueryValue('last_call');
-        $this->searchCriteria->setPageSize($limit)->setCurrentPage($page);
+        $this->searchCriteria
+            ->addFilter('store_id', $this->helperData->getGeneralConfig('store_id'))
+            ->setPageSize($limit)
+            ->setCurrentPage($page);
         if ($lastCall) {
             $this->searchCriteria
                 ->addFilter('updated_at', $lastCall, 'gt');
@@ -116,6 +124,34 @@ class OrderManagement extends CheckWebsiteToken implements OrderManagementInterf
         return [[
             "success" => true,
             "order" => $order->getIncrementId(),
+            'status' => $data['status'],
         ]];
+    }
+
+    /**
+     * @param string $orderId
+     * @return array[]
+     */
+    public function getOrder(string $orderId)
+    {
+
+        try {
+            $searchCriteria = $this->searchCriteria
+                ->addFilter('increment_id', $orderId, 'eq')->create();
+            $orderList = $this->orderRepository->getList($searchCriteria)->getItems();
+
+            $order = end($orderList);
+            if (!$order) {
+                throw new \Exception("Order not found");
+            }
+            return [[
+                "order" => $this->_orderService->transform($order)->toArray(),
+            ]];
+        } catch (\Exception $exception) {
+            return [[
+                "success" => false,
+                "message" => $exception->getMessage(),
+            ]];
+        }
     }
 }

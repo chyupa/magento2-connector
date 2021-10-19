@@ -16,4 +16,10 @@ interface OrderManagementInterface
      * @return mixed
      */
     public function updateOrder(string $orderId);
+
+    /**
+     * @param string $orderId
+     * @return mixed
+     */
+    public function getOrder(string $orderId);
 }

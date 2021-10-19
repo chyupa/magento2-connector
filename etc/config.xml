@@ -12,6 +12,7 @@
                 <width_attribute>null</width_attribute>
                 <height_attribute>null</height_attribute>
                 <dimension_unit>cm</dimension_unit>
+                <store_id>1</store_id>
             </general>
         </settings>
     </default>

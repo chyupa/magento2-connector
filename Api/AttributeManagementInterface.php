@@ -14,10 +14,4 @@ interface AttributeManagementInterface
      * @return mixed
      */
     public function getAttributes();
-
-    /**
-     * @param string|null $attributeId
-     * @return Magento\Framework\Controller\Result\Json
-     */
-    public function saveAttribute(string $attributeId = null);
 }

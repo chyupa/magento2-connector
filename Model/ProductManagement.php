@@ -38,16 +38,6 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     private $productFactory;
 
     /**
-     * @var CategoryLinkManagementInterface
-     */
-    private $categoryManagement;
-
-    /**
-     * @var ImageProcessor
-     */
-    private $imageProcessor;
-
-    /**
      * @var SearchCriteriaBuilder
      */
     private $searchCriteria;
@@ -57,33 +47,9 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
      */
     private $productService;
     /**
-     * @var AttributeRepositoryInterface
-     */
-    private $attributeRepository;
-    /**
-     * @var ProductAction
-     */
-    private $productAction;
-    /**
-     * @var GroupFactory
-     */
-    private $groupFactory;
-    /**
-     * @var AttributeFactory
-     */
-    private $attributeFactory;
-    /**
-     * @var AttributeManagementInterface
-     */
-    private $attributeManagement;
-    /**
      * @var GetSourceItemsBySkuInterface
      */
     private $sourceItemsBySku;
-    /**
-     * @var SourceRepositoryInterface
-     */
-    private $sourceRepository;
     /**
      * @var Data
      */
@@ -93,18 +59,6 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
      * @var mixed
      */
     private $defaultStockSource;
-    /**
-     * @var AttributeOptionLabelInterface
-     */
-    private $attributeOptionLabel;
-    /**
-     * @var Option
-     */
-    private $option;
-    /**
-     * @var AttributeOptionManagementInterface
-     */
-    private $attributeOptionManagement;
 
     /**
      * CategoryManagement constructor.
@@ -112,17 +66,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
      * @param RequestInterface $request
      * @param ProductRepositoryInterface $productRepository
      * @param ProductFactory $productFactory
-     * @param ProductAction $productAction
-     * @param CategoryLinkManagementInterface $categoryManagement
-     * @param AttributeRepositoryInterface $attributeRepository
-     * @param AttributeManagementInterface $attributeManagement
-     * @param GroupFactory $groupFactory
-     * @param AttributeFactory $attributeFactory
-     * @param AttributeOptionManagementInterface $attributeOptionManagement
-     * @param FrontendLabelFactory $attributeOptionLabel
-     * @param \Magento\Eav\Api\Data\AttributeOptionInterfaceFactory $option
      * @param GetSourceItemsBySkuInterface $sourceItemsBySku
-     * @param ImageProcessor $imageProcessor
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param SourceRepositoryInterface $sourceRepository
      * @param Product $productService
@@ -133,19 +77,8 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         RequestInterface $request,
         ProductRepositoryInterface $productRepository,
         ProductFactory $productFactory,
-        ProductAction $productAction,
-        CategoryLinkManagementInterface $categoryManagement,
-        AttributeRepositoryInterface $attributeRepository,
-        AttributeManagementInterface $attributeManagement,
-        GroupFactory $groupFactory,
-        AttributeFactory $attributeFactory,
-        AttributeOptionManagementInterface $attributeOptionManagement,
-        FrontendLabelFactory $attributeOptionLabel,
-        \Magento\Eav\Api\Data\AttributeOptionInterfaceFactory $option,
         GetSourceItemsBySkuInterface $sourceItemsBySku,
-        ImageProcessor $imageProcessor,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        SourceRepositoryInterface $sourceRepository,
         Product $productService,
         Data $helperData
     )
@@ -154,23 +87,12 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
 
         $this->productRepository = $productRepository;
         $this->productFactory = $productFactory;
-        $this->categoryManagement = $categoryManagement;
-        $this->imageProcessor = $imageProcessor;
         $this->searchCriteria = $searchCriteriaBuilder;
         $this->productService = $productService;
-        $this->attributeRepository = $attributeRepository;
-        $this->productAction = $productAction;
-        $this->groupFactory = $groupFactory;
-        $this->attributeFactory = $attributeFactory;
-        $this->attributeManagement = $attributeManagement;
         $this->sourceItemsBySku = $sourceItemsBySku;
-        $this->sourceRepository = $sourceRepository;
         $this->helperData = $helperData;
 
         $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
-        $this->attributeOptionLabel = $attributeOptionLabel;
-        $this->option = $option;
-        $this->attributeOptionManagement = $attributeOptionManagement;
     }
 
     /**
@@ -183,6 +105,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         $this->searchCriteria
             ->addFilter('type_id', 'configurable', 'neq')
             ->setPageSize($limit)
+            ->addFilter('store_id', $this->helperData->getGeneralConfig('store_id'))
             ->setCurrentPage($page);
 
         $list = $this->productRepository
@@ -203,6 +126,36 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     }
 
     /**
+     * @return mixed
+     */
+    public function getProduct()
+    {
+        $data = $this->request->getBodyParams();
+        try {
+            if (empty($data['product_id']) && empty($data['sku'])) {
+                throw new \Exception("Missing product identifier");
+            }
+
+            if (!empty($data['product_id'])) {
+                $product = $this->productRepository->getById($data['product_id'], true, 0, true);
+            } else {
+                $product = $this->productRepository->get($data['sku']);
+
+            }
+
+            return [[
+                "product" => $this->productService->setProduct($product)->toArray(),
+            ]];
+
+        } catch (\Exception $exception) {
+            return [[
+                "success" => false,
+                "message" => $exception->getMessage(),
+            ]];
+        }
+    }
+
+    /**
      * @param string|null $productId
      * @return mixed|void
      * @throws \Magento\Framework\Exception\CouldNotSaveException
@@ -215,28 +168,6 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         try {
             /** @var \Magento\Catalog\Api\Data\ProductInterface|\Magento\Catalog\Model\Product $product */
             $product = $this->getNewOrExistingProduct($productId);
-
-            $product->setName($data['name']);
-            $product->setDescription($data['description']);
-
-            if (!empty($data['categories'])) {
-                $categoryIds = array_map(function ($category) {
-                    return $category['category_website_id'];
-                }, $data['categories']);
-
-                $this->categoryManagement->assignProductToCategories($product->getSku(), $categoryIds);
-            }
-
-            if (!empty($data['images'])) {
-                $this->updateProductImages($product, $data['images']);
-            }
-
-            if (!empty($data['characteristics'])) {
-                $this->updateProductCharacteristics($product, $data['characteristics']);
-            }
-
-            $product->setData('easysales_should_send', false);
-            $this->productRepository->save($product);
 
             // update stock after product save otherwise the new product quantity won't be reflected
             $stocks = $this->sourceItemsBySku->execute($product->getSku());
@@ -265,112 +196,8 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         return [[
             "success" => true,
             "product" => $product->getId(),
+            "stock" => $data['stock'],
         ]];
-    }
-
-    /**
-     * Update product images
-     * For now it only changes the image order and nothing else
-     *
-     * @param \Magento\Catalog\Api\Data\ProductInterface|\Magento\Catalog\Model\Product $product
-     * @param $images
-     */
-    private function updateProductImages(&$product, $images)
-    {
-        $sort_order = 1;
-
-        foreach ($images as $image) {
-            foreach ($product->getMediaGalleryImages() as $galleryImage) {
-                if ($galleryImage->getUrl() === $image) {
-                    $this->imageProcessor->updateImage($product, $galleryImage->getFile(), [
-                        'position' => $sort_order,
-                    ]);
-                }
-            }
-
-            $sort_order++;
-        }
-    }
-
-    /**
-     * TODO: change the text field to multiselect if there are multiple characteristics sent
-     * @param \Magento\Catalog\Api\Data\ProductInterface|\Magento\Catalog\Model\Product $product
-     * @param $characteristics
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Exception
-     */
-    private function updateProductCharacteristics(&$product, $characteristics)
-    {
-        $processed = [];
-        $characteristicsData = [];
-        $attributeGroupId = null;
-        foreach ($characteristics as $characteristic) {
-            if (in_array($characteristic['characteristic_website_id'], $processed)) continue;
-            $value = $characteristic['value'];
-            $attribute = $this->attributeRepository->get(
-                \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
-                $characteristic['characteristic_website_id']
-            );
-
-            // guess that all attributes belong to the custom attributes group
-            if (is_null($attributeGroupId)) {
-                $attributeGroupId = $attribute->getData('attribute_group_id');
-            }
-
-            if ($attribute->getFrontendInput() === "boolean") {
-                $value = false;
-                if (in_array(strtolower($characteristic['value']), ['yes', 'da', 'true', '1'])) {
-                    $value = true;
-                }
-            } else if ($attribute->getFrontendInput() === "select") {
-                $value = $attribute->getSource()->getOptionId($value);
-                if (!$value) {
-                    $value = $this->addOptionSelect($attribute, $characteristic['value']);
-                }
-            } else if ($attribute->getFrontendInput() === "multiselect") {
-                $characteristicOptions = array_filter($characteristics, function ($characteristicOption) use ($characteristic) {
-                    return $characteristicOption['characteristic_website_id'] === $characteristic['characteristic_website_id'];
-                });
-
-                $value = $attribute->getSource()->getOptionId($value);
-
-                if (count($characteristicOptions) > 1) {
-                    $processed[] = $characteristic['characteristic_website_id'];
-                    $characteristicsValues = [];
-                    foreach ($characteristicOptions as $characteristicOption) {
-                        $option = $attribute->getSource()->getOptionId($characteristicOption['value']);
-                        if (!$option) {
-                            $option = $this->addOptionMultiselect($attribute, $characteristicOption['value']);
-                        }
-
-                        $characteristicsValues[] = $option;
-                    }
-
-                    $value = implode(",", $characteristicsValues);
-                } else if (!$value) {
-                    $value = $this->addOptionMultiselect($attribute, $characteristic['value']);
-                }
-            }
-
-            if (!$product->getData($attribute->getAttributeCode()) && $attributeGroupId) {
-                $this->attributeManagement->assign(
-                    \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
-                    $product->getAttributeSetId(),
-                    $attributeGroupId,
-                    $attribute->getAttributeCode(),
-                    null
-                );
-
-                // retrieve the product again just so we can add the attribute value to the newly assigned attribute
-                $product = $this->getNewOrExistingProduct($product->getId());
-            }
-
-            $characteristicsData[$attribute->getAttributeCode()] = $value;
-            $product->setData($attribute->getAttributeCode(), $value);
-
-        }
-        $this->productAction->updateAttributes([$product->getId()], $characteristicsData, 0);
     }
 
     /**
@@ -383,88 +210,5 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     private function getNewOrExistingProduct($productId)
     {
         return $productId ? $this->productRepository->getById($productId, true, 0, true) : $this->productFactory->create();
-    }
-
-    /**
-     * Add new option to an option attribute
-     *
-     * @param $attribute
-     * @param $label
-     * @return mixed
-     * @throws StateException
-     * @throws \Magento\Framework\Exception\InputException
-     */
-    private function addOptionSelect($attribute, $label)
-    {
-        $currentAttributes = [];
-        $attributeOptions = $this->attributeOptionManagement->getItems('catalog_product', $attribute);
-        $newOptions = [];
-        $counter = 0;
-        foreach ($attributeOptions as $option) {
-            if (!$option->getValue()) {
-                continue;
-            }
-            if ($option->getLabel() instanceof \Magento\Framework\Phrase) {
-                $attrLabel = $option->getText();
-            } else {
-                $attrLabel = $option->getLabel();
-            }
-
-            if ($attrLabel == '') {
-                continue;
-            }
-
-            $currentAttributes[] = $attrLabel;
-            $newOptions['value'][$option->getValue()] = [$attrLabel, $attrLabel];
-            $counter++;
-        }
-
-        if (!in_array($label, $currentAttributes)) {
-            $newOptions['value']['option_' . $counter] = [$label, $label];
-        }
-        $attribute->setOption($newOptions);
-        try {
-            $this->attributeRepository->save($attribute);
-        } catch (\Exception $e) {
-            var_dump($e->getMessage(), $e->getTraceAsString());
-        }
-
-        return $attribute->getSource()->getOptionId($label);
-    }
-
-    /**
-     * Add new option to Attribute if it is mutliselect
-     * Might still fail if there is another label with default value the $label and store value something else
-     *
-     * @param $attribute
-     * @param $label
-     * @return string|null
-     */
-    private function addOptionMultiselect($attribute, $label)
-    {
-        /** @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel */
-        $optionLabel = $this->attributeOptionLabel->create();
-        $optionLabel->setStoreId(0);
-        $optionLabel->setLabel($label);
-
-        $option = $this->option->create();
-        $option->setLabel($label);
-        $option->setStoreLabels([$optionLabel]);
-        $option->setSortOrder(0);
-        $option->setIsDefault(false);
-
-        try {
-            $newOptionId = $this->attributeOptionManagement->add(
-                \Magento\Catalog\Model\Product::ENTITY,
-                $attribute,
-                $option
-            );
-            // retrieve the ID of the new attribute option
-            $newOptionId = str_replace("id_", "", $newOptionId);
-        } catch (\Exception $exception) {
-            $newOptionId = null;
-        }
-
-        return $newOptionId;
     }
 }
