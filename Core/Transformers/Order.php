@@ -77,19 +77,19 @@ class Order extends BaseTransformer
             'order_id' => $order->getIncrementId(),
             'invoice_series' => $this->helperData->getGeneralConfig('invoice_series', null),
             'order_date' => $this->dateTime->formatDate($order->getCreatedAt()),
-            'order_total' => (float) $order->getTotalDue() + abs($order->getBaseDiscountAmount()),
+            'order_total' => (float) $order->getTotalDue() + abs($order->getDiscountAmount()),
             'status' => isset($statuses[$order->getStatus()]) ? $statuses[$order->getStatus()] : 1,
             'payment_mode' => isset($paymentMethods[$code]) ? $paymentMethods[$code] : 1,
-            'shipment_tax' => (float) $order->getBaseShippingInclTax(),
+            'shipment_tax' => (float) $order->getShippingInclTax(),
             'observations' => $order->getCustomerNote(),
-            'total_vouchers' => (float) $order->getBaseDiscountAmount(),
+            'total_vouchers' => (float) $order->getDiscountAmount(),
             'customer' => $this->getCustomer($order, $order->getBillingAddress()->getData()),
             'billing_address' => $this->getAddress($order->getBillingAddress()->getData()),
             'shipping_address' => $order->getShippingAddress() ? $this->getAddress($order->getShippingAddress()->getData()) : null,
             'order_products' => $this->getOrderProducts($order),
             'shipment' => [
                 'tax' => $shippingTaxRate,
-                'price_with_tax' => $order->getShippingAmount(),
+                'price_with_tax' => $order->getShippingInclTax(),
             ],
         ];
 
