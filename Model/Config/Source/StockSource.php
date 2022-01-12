@@ -18,9 +18,15 @@ class StockSource
      * @param SourceRepositoryInterface $sourceRepository
      */
     public function __construct(
-        SourceRepositoryInterface $sourceRepository
+//        SourceRepositoryInterface $sourceRepository
+        \Magento\Framework\Module\Manager $moduleManager,
+        \Magento\Framework\ObjectManagerInterface $objectManager
     ) {
-        $this->sourceRepository = $sourceRepository;
+        if ($moduleManager->isEnabled('Magento_InventoryApi')) {
+            $this->sourceRepository = $objectManager->create('Magento\InventoryApi\Api\SourceRepositoryInterface');
+        } else {
+            $this->sourceRepository = null;
+        }
     }
     /**
      * Options getter
@@ -29,18 +35,19 @@ class StockSource
      */
     public function toOptionArray()
     {
-        $sources = $this->sourceRepository->getList();
-
         $sourcesOptions = [
             'value' => null,
             'label' => 'Please choose'
         ];
+        if ($this->sourceRepository) {
+            $sources = $this->sourceRepository->getList();
 
-        foreach ($sources->getItems() as $source) {
-            $sourcesOptions[]= [
-                'value' => $source->getSourceCode(),
-                'label' => $source->getName(),
-            ];
+            foreach ($sources->getItems() as $source) {
+                $sourcesOptions[]= [
+                    'value' => $source->getSourceCode(),
+                    'label' => $source->getName(),
+                ];
+            }
         }
 
         return $sourcesOptions;

@@ -6,24 +6,11 @@ use EasySales\Integrari\Api\ProductManagementInterface;
 use EasySales\Integrari\Core\Auth\CheckWebsiteToken;
 use EasySales\Integrari\Core\Transformers\Product;
 use EasySales\Integrari\Helper\Data;
-use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Model\Product\Gallery\Processor as ImageProcessor;
 use Magento\Catalog\Model\ProductFactory;
-use Magento\Catalog\Model\ResourceModel\Product\Action as ProductAction;
-use Magento\Eav\Api\AttributeManagementInterface;
-use Magento\Eav\Api\AttributeOptionManagementInterface;
-use Magento\Eav\Api\AttributeRepositoryInterface;
-use Magento\Eav\Api\Data\AttributeOptionLabelInterface;
-use Magento\Eav\Model\Entity\Attribute\FrontendLabelFactory;
-use Magento\Eav\Model\Entity\Attribute\GroupFactory;
-use Magento\Eav\Model\Entity\Attribute\Option;
-use Magento\Eav\Model\Entity\AttributeFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Exception\StateException;
 use Magento\Framework\Webapi\Rest\Request as RequestInterface;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
-use Magento\InventoryApi\Api\SourceRepositoryInterface;
 
 class ProductManagement extends CheckWebsiteToken implements ProductManagementInterface
 {
@@ -49,7 +36,7 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     /**
      * @var GetSourceItemsBySkuInterface
      */
-    private $sourceItemsBySku;
+    private $sourceItemsBySku = null;
     /**
      * @var Data
      */
@@ -68,7 +55,6 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
      * @param ProductFactory $productFactory
      * @param GetSourceItemsBySkuInterface $sourceItemsBySku
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param SourceRepositoryInterface $sourceRepository
      * @param Product $productService
      * @param Data $helperData
      * @throws \Exception
@@ -77,10 +63,11 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         RequestInterface $request,
         ProductRepositoryInterface $productRepository,
         ProductFactory $productFactory,
-        GetSourceItemsBySkuInterface $sourceItemsBySku,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         Product $productService,
-        Data $helperData
+        Data $helperData,
+        \Magento\Framework\Module\Manager $moduleManager,
+        \Magento\Framework\ObjectManagerInterface $objectManager
     )
     {
         parent::__construct($request, $helperData);
@@ -89,7 +76,9 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
         $this->productFactory = $productFactory;
         $this->searchCriteria = $searchCriteriaBuilder;
         $this->productService = $productService;
-        $this->sourceItemsBySku = $sourceItemsBySku;
+        if ($moduleManager->isEnabled('Magento_Inventory') && $moduleManager->isEnabled('Magento_InventoryApi')) {
+            $this->sourceItemsBySku = $objectManager->create('Magento\InventoryApi\Api\GetSourceItemsBySkuInterface');
+        }
         $this->helperData = $helperData;
 
         $this->defaultStockSource = $this->helperData->getGeneralConfig('stock_source');
@@ -170,20 +159,22 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
             $product = $this->getNewOrExistingProduct($productId);
 
             // update stock after product save otherwise the new product quantity won't be reflected
-            $stocks = $this->sourceItemsBySku->execute($product->getSku());
+            if ($this->sourceItemsBySku) {
+                $stocks = $this->sourceItemsBySku->execute($product->getSku());
 
-            $stockSourceItem = null;
-            foreach ($stocks as $stock) {
-                if ($stock->getSourceCode() === $this->defaultStockSource) {
-                    $stockSourceItem = $stock;
-                    break;
+                $stockSourceItem = null;
+                foreach ($stocks as $stock) {
+                    if ($stock->getSourceCode() === $this->defaultStockSource) {
+                        $stockSourceItem = $stock;
+                        break;
+                    }
                 }
-            }
 
-            // only update stock if there is a change
-            if ($stockSourceItem && $stockSourceItem->getQuantity() !== $data['stock']) {
-                $stockSourceItem->setQuantity($data['stock']);
-                $stockSourceItem->save();
+                // only update stock if there is a change
+                if ($stockSourceItem && $stockSourceItem->getQuantity() !== $data['stock']) {
+                    $stockSourceItem->setQuantity($data['stock']);
+                    $stockSourceItem->save();
+                }
             }
 
         } catch (\Exception $exception) {

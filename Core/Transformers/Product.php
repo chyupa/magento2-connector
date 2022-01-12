@@ -25,7 +25,7 @@ class Product extends BaseTransformer
     /**
      * @var GetSourceItemsBySkuInterface
      */
-    private $stockRepository;
+    private $stockRepository = null;
     /**
      * @var ProductCategoryList
      */
@@ -102,15 +102,18 @@ class Product extends BaseTransformer
      * @param TaxCalculation $taxCalculation
      */
     public function __construct(
-        GetSourceItemsBySkuInterface $stockItemRepository,
         AttributeRepositoryInterface $attributeRepository,
         ProductRepositoryInterface $productRepository,
         ProductCategoryList $productCategoryList,
         Configurable $configurableType,
         Data $helperData,
-        TaxCalculation $taxCalculation
+        TaxCalculation $taxCalculation,
+        \Magento\Framework\Module\Manager $moduleManager,
+        \Magento\Framework\ObjectManagerInterface $objectManager
     ) {
-        $this->stockRepository = $stockItemRepository;
+        if ($moduleManager->isEnabled('Magento_Inventory') && $moduleManager->isEnabled('Magento_InventoryApi')) {
+            $this->stockRepository = $objectManager->create('Magento\InventoryApi\Api\GetSourceItemsBySkuInterface');
+        }
         $this->productCategoryList = $productCategoryList;
         $this->helperData = $helperData;
         $this->configurableType = $configurableType;
@@ -306,6 +309,10 @@ class Product extends BaseTransformer
     protected function getStock(ProductInterface $product)
     {
         $quantity = 0;
+
+        if (!$this->stockRepository) {
+            return $quantity;
+        }
         $stocks = $this->stockRepository->execute($product->getSku());
         $stockSourceItem = null;
         foreach ($stocks as $stock) {

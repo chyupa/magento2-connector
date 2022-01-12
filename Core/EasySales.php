@@ -10,7 +10,6 @@ class EasySales
     const MODULE_NAME = 'EasySales_Integrari';
     const MICROSERVICE_URL = "https://magento2-microservice.easysales.ro/api";
     CONST DECIMAL_PRECISION = 4;
-//    const MICROSERVICE_URL = "http://microservice-magento.local/api";
 
     /**
      * @var ClientInterface
@@ -36,10 +35,10 @@ class EasySales
         $this->websiteToken = $helperData->getGeneralConfig('website_token');
 
         $this->routes = [
-            'sendCategory' => '/v1/website/categories/save', // done
-            'sendProduct' => '/v1/website/products/save', // done
+            'sendCategory' => '/v1/website/categories/save',
+            'sendProduct' => '/v1/website/products/save',
             'sendOrder' => '/v1/website/orders/save',
-            'sendCharacteristic' => '/v1/website/characteristics/save', // done
+            'sendCharacteristic' => '/v1/website/characteristics/save',
         ];
     }
 
