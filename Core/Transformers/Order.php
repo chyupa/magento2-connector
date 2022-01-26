@@ -159,23 +159,37 @@ class Order extends BaseTransformer
                 continue;
             }
 
-            $id = null;
-            $name = null;
-
-            if (count($product->getChildrenItems())) {
-                $id = $product->getChildrenItems()[0]->getProductId();
-                $name = $product->getChildrenItems()[0]->getName();
-            }
-
+            $quantity = $product->getQtyOrdered();
             $unitPrice = round(($product->getPriceInclTax() / (1 + ((int)$product->getTaxPercent()) / 100)), EasySales::DECIMAL_PRECISION);
 
+            if (count($product->getChildrenItems())) {
+                foreach ($product->getChildrenItems() as $childItem) {
+                    $id = $childItem->getProductId();
+                    $name = $childItem->getName();
+                    $quantity = $childItem->getQtyOrdered();
+                    $unitPrice = round(($childItem->getPriceInclTax() / (1 + ((int)$childItem->getTaxPercent()) / 100)), EasySales::DECIMAL_PRECISION);
+
+                    $products[] = [
+                        'product_website_id' => $id ? $id : $product->getProductId(),
+                        'sku' => $childItem->getSku(),
+                        'name' => $name ? $name : $product->getName(),
+                        'quantity' => (float) $quantity,
+                        'price' => $unitPrice,
+                        'total' => $unitPrice * $quantity,
+                        'tax' => (int) $childItem->getTaxPercent()
+                    ];
+                }
+
+                continue;
+            }
+
             $products[] = [
-                'product_website_id' => $id ? $id : $product->getProductId(),
+                'product_website_id' => $product->getProductId(),
                 'sku' => $product->getSku(),
-                'name' => $name ? $name : $product->getName(),
-                'quantity' => (float) $product->getQtyOrdered(),
+                'name' => $product->getName(),
+                'quantity' => (float) $quantity,
                 'price' => $unitPrice,
-                'total' => $unitPrice * $product->getQtyOrdered(),
+                'total' => $unitPrice * $quantity,
                 'tax' => (int) $product->getTaxPercent()
             ];
         }
