@@ -1,5 +1,8 @@
 # Changelog
 
+### v1.3.4
+- Do not send product webhook if not all characteristics have value
+
 ### v1.3.3
 - Fix issue with configurable products not having correct amounts
 - Send configurable product properties

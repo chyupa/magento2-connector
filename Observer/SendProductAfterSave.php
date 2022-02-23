@@ -38,6 +38,21 @@ class SendProductAfterSave implements ObserverInterface
         }
         $this->product->setProduct($product);
 
-        $this->easySales->execute("sendProduct", ['product' => $this->product->toArray()]);
+        $transformed = $this->product->toArray();
+
+        $shouldSendToEs = true;
+        // check if all characteristics have value
+        // for some reason, when a new product is created not all characteristics have values
+        // in order to prevent sending wrong data, we don't send it at all
+        foreach ($transformed['characteristics'] as $characteristic) {
+            if (!isset($characteristic['value'])) {
+                $shouldSendToEs = false;
+                break;
+            }
+        }
+
+        if ($shouldSendToEs) {
+            $this->easySales->execute("sendProduct", ['product' => $transformed]);
+        }
     }
 }
