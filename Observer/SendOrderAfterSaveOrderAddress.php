@@ -34,6 +34,8 @@ class SendOrderAfterSaveOrderAddress implements ObserverInterface
 
         $transformed = $this->orderTransformer->transform($address->getOrder());
 
-        $this->easySales->execute("sendOrder", ['order' => $transformed->toArray()]);
+        if (!empty($transformed->toArray()['order_date'])) {
+            $this->easySales->execute("sendOrder", ['order' => $transformed->toArray()]);
+        }
     }
 }

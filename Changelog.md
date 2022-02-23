@@ -1,5 +1,8 @@
 # Changelog
 
+### v1.3.2
+- Do not send order webhook to microservice when order date is null
+
 ### v1.3.1
 - Retrieve order products from bundle products and send them as individual products
 
