@@ -162,7 +162,7 @@ class Order extends BaseTransformer
             $quantity = $product->getQtyOrdered();
             $unitPrice = round(($product->getPriceInclTax() / (1 + ((int)$product->getTaxPercent()) / 100)), EasySales::DECIMAL_PRECISION);
 
-            if (count($product->getChildrenItems())) {
+            if ($product->getProductType() === 'bundle' && count($product->getChildrenItems())) {
                 foreach ($product->getChildrenItems() as $childItem) {
                     $id = $childItem->getProductId();
                     $name = $childItem->getName();
@@ -183,6 +183,19 @@ class Order extends BaseTransformer
                 continue;
             }
 
+            $properties = null;
+            if ($product->getProductType() === 'configurable') {
+                $productData = $product->getData();
+                if (!empty($productData['product_options']['attributes_info'])) {
+                    foreach ($productData['product_options']['attributes_info'] as $data) {
+                        $properties[] = [
+                            'label' => $data['label'],
+                            'value' => $data['value'],
+                        ];
+                    }
+                }
+            }
+
             $products[] = [
                 'product_website_id' => $product->getProductId(),
                 'sku' => $product->getSku(),
@@ -190,7 +203,8 @@ class Order extends BaseTransformer
                 'quantity' => (float) $quantity,
                 'price' => $unitPrice,
                 'total' => $unitPrice * $quantity,
-                'tax' => (int) $product->getTaxPercent()
+                'tax' => (int) $product->getTaxPercent(),
+                'properties' => $properties,
             ];
         }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+### v1.3.3
+- Fix issue with configurable products not having correct amounts
+- Send configurable product properties
+
 ### v1.3.2
 - Do not send order webhook to microservice when order date is null
 
