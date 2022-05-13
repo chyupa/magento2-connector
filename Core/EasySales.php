@@ -8,7 +8,7 @@ use Magento\Framework\HTTP\ClientInterface;
 class EasySales
 {
     const MODULE_NAME = 'EasySales_Integrari';
-    const MICROSERVICE_URL = "https://magento2-microservice.easysales.ro/api";
+    const MICROSERVICE_URL = "https://magento2-microservice.easy-sales.com/api";
     CONST DECIMAL_PRECISION = 4;
 
     /**

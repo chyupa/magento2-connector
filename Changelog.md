@@ -1,5 +1,8 @@
 # Changelog
 
+### v1.3.5
+- Add two new methods for retrieving productPrices and productStocks
+
 ### v1.3.4
 - Do not send product webhook if not all characteristics have value
 

@@ -18,6 +18,18 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
+    <route method="GET" url="/V1/easysales-integrari/product-prices">
+        <service class="EasySales\Integrari\Api\ProductManagementInterface" method="getProductPrices"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route method="GET" url="/V1/easysales-integrari/product-stocks">
+        <service class="EasySales\Integrari\Api\ProductManagementInterface" method="getProductStocks"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="PUT" url="/V1/easysales-integrari/products/:productId">
         <service class="EasySales\Integrari\Api\ProductManagementInterface" method="saveProduct"/>
         <resources>

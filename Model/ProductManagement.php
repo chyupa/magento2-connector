@@ -145,6 +145,66 @@ class ProductManagement extends CheckWebsiteToken implements ProductManagementIn
     }
 
     /**
+     * @return mixed
+     */
+    public function getProductPrices()
+    {
+        $page = $this->request->getQueryValue('page', 1);
+        $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
+        $this->searchCriteria
+            ->addFilter('type_id', 'configurable', 'neq')
+            ->setPageSize($limit)
+            ->addFilter('store_id', $this->helperData->getGeneralConfig('store_id'))
+            ->setCurrentPage($page);
+
+        $list = $this->productRepository
+            ->getList($this->searchCriteria->create());
+
+        $products = [];
+
+        foreach ($list->getItems() as $product) {
+            $products[] = $this->productService->setProductPrice($product)->toArray();
+        }
+
+        return [[
+            'perPage'  => $limit,
+            'pages'    => ceil($list->getTotalCount() / $limit),
+            'curPage'  => $page,
+            'prices' => $products,
+        ]];
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getProductStocks()
+    {
+        $page = $this->request->getQueryValue('page', 1);
+        $limit = $this->request->getQueryValue('limit', self::PER_PAGE);
+        $this->searchCriteria
+            ->addFilter('type_id', 'configurable', 'neq')
+            ->setPageSize($limit)
+            ->addFilter('store_id', $this->helperData->getGeneralConfig('store_id'))
+            ->setCurrentPage($page);
+
+        $list = $this->productRepository
+            ->getList($this->searchCriteria->create());
+
+        $products = [];
+
+        foreach ($list->getItems() as $product) {
+            $products[] = $this->productService->setProductStock($product)->toArray();
+        }
+
+        return [[
+            'perPage'  => $limit,
+            'pages'    => ceil($list->getTotalCount() / $limit),
+            'curPage'  => $page,
+            'stocks' => $products,
+        ]];
+    }
+
+    /**
      * @param string|null $productId
      * @return mixed|void
      * @throws \Magento\Framework\Exception\CouldNotSaveException

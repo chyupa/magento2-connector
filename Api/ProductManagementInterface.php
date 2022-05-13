@@ -22,4 +22,16 @@ interface ProductManagementInterface
      * @return mixed
      */
     public function getProduct();
+
+    /**
+     * @param string $productId
+     * @return mixed
+     */
+    public function getProductPrices();
+
+    /**
+     * @param string $productId
+     * @return mixed
+     */
+    public function getProductStocks();
 }

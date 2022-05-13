@@ -189,6 +189,50 @@ class Product extends BaseTransformer
     }
 
     /**
+     * @param ProductInterface $product
+     * @return $this
+     */
+    public function setProductPrice(ProductInterface $product)
+    {
+        $this->product = $product;
+
+        $taxRate = $this->taxCalculation->getCalculatedRate($this->product->getData('tax_class_id'));
+        $salePrice = round($this->product->getFinalPrice() * (1 + $taxRate / 100), EasySales::DECIMAL_PRECISION);
+        $fullPrice = round($this->product->getPrice() * (1 + $taxRate / 100), EasySales::DECIMAL_PRECISION);
+
+        $this->data = [
+            "product_website_id" => $this->product->getId(),
+            "sku" => $this->product->getSku(),
+            'prices' => [
+                "sale_price" => $salePrice,
+                "full_price" => $fullPrice,
+                "tax_rate" => $taxRate,
+            ],
+        ];
+
+        return $this;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return $this
+     */
+    public function setProductStock(ProductInterface $product)
+    {
+        $this->product = $product;
+
+        $stock = $this->getStock($this->product);
+
+        $this->data = [
+            "product_website_id" => $this->product->getId(),
+            "sku" => $this->product->getSku(),
+            'stock' => $stock,
+        ];
+
+        return $this;
+    }
+
+    /**
      * Get characteristics from the product and from it's parent if it exists
      *
      * @return array
